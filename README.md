@@ -66,6 +66,7 @@ The app will be available at [http://localhost:5173/music-league-tools/](http://
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint errors
 - `npm run format` - Format code with Prettier
+- `npm run docker:dev` - Start Docker instance
 
 ## Deployment
 
