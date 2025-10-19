@@ -1,0 +1,30 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.home {
+  &__header {
+    margin-bottom: $spacing-2xl;
+    text-align: center;
+  }
+
+  &__title {
+    margin-bottom: $spacing-md;
+  }
+
+  &__subtitle {
+    font-size: $font-size-lg;
+    color: var(--color-text-secondary);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: $spacing-lg;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+}
