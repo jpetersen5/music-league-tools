@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/header.tsx","./src/components/layout.tsx","./src/components/themetoggle.tsx","./src/components/toolcard.tsx","./src/hooks/usetheme.ts","./src/pages/home.tsx","./src/pages/secretsanta.tsx","./src/types/index.ts","./src/utils/constants.ts","./src/utils/theme.ts"],"version":"5.6.3"}
