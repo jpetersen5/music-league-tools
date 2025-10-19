@@ -1,0 +1,64 @@
+@use './variables' as *;
+@use './mixins' as *;
+
+// Fixed viewport layout
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+// Header - fixed height
+.app-header {
+  flex-shrink: 0;
+  height: 64px;
+  @include flex-between;
+  padding: 0 $spacing-lg;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  z-index: $z-header;
+
+  @include mobile {
+    padding: 0 $spacing-md;
+  }
+}
+
+.header-content {
+  @include flex-between;
+  width: 100%;
+  max-width: $breakpoint-wide;
+  margin: 0 auto;
+}
+
+.app-title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: var(--color-primary);
+  margin: 0;
+
+  @include mobile {
+    font-size: $font-size-lg;
+  }
+}
+
+// Main content area - scrollable
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  @include custom-scrollbar;
+}
+
+.content-wrapper {
+  width: 100%;
+  max-width: $breakpoint-wide;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-lg;
+
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+  }
+}
