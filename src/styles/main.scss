@@ -28,7 +28,8 @@
   --color-primary: #6366f1;
   --color-primary-hover: #4f46e5;
   --color-shadow: rgba(0, 0, 0, 0.1);
-  --icon-filter: invert(6%) sepia(7%) saturate(1471%) hue-rotate(176deg) brightness(94%) contrast(91%);
+  --icon-filter: invert(6%) sepia(7%) saturate(1471%) hue-rotate(176deg) brightness(94%)
+    contrast(91%);
 }
 
 // Global reset
@@ -53,7 +54,9 @@ body {
   background: var(--color-background);
   color: var(--color-text);
   overflow: hidden; // Prevent body scrolling
-  transition: background-color $transition-base, color $transition-base;
+  transition:
+    background-color $transition-base,
+    color $transition-base;
 }
 
 // Typography
