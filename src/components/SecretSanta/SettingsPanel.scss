@@ -1,0 +1,286 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.settings-panel {
+  &__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: $z-modal;
+    animation: fadeIn $transition-fast;
+  }
+
+  &__popover {
+    position: fixed;
+    width: 320px;
+    max-height: 500px;
+    overflow-y: auto;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: calc($z-modal + 1);
+    animation: slideDown $transition-base;
+
+    @media (max-width: $breakpoint-mobile) {
+      width: calc(100vw - 16px);
+      max-width: 320px;
+    }
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-md;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-background);
+    border-radius: $radius-md $radius-md 0 0;
+  }
+
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    font-size: $font-size-lg;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: $spacing-xs;
+    line-height: 1;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: var(--color-text);
+    }
+  }
+
+  &__content {
+    padding: $spacing-md;
+  }
+
+  &__section {
+    padding: $spacing-md 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+
+  &__section-title {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-md;
+    color: var(--color-text);
+  }
+
+  &__checkbox {
+    @include flex-start;
+    align-items: center;
+    gap: $spacing-sm;
+    cursor: pointer;
+    font-size: $font-size-base;
+
+    input[type='checkbox'] {
+      cursor: pointer;
+    }
+
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      input[type='checkbox'] {
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  &__tooltip {
+    cursor: help;
+    opacity: 0.7;
+    transition: opacity $transition-fast;
+
+    img {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      vertical-align: middle;
+      filter: var(--icon-filter);
+    }
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &__n-cycle {
+    @include flex-start;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-top: $spacing-sm;
+    flex-wrap: wrap;
+  }
+
+  &__n-cycle-disabled {
+    font-size: $font-size-base;
+    color: var(--color-text-secondary);
+    font-family: $font-family-mono;
+  }
+
+  &__n-cycle-controls {
+    @include flex-start;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+
+  &__n-cycle-hint {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    @include flex-start;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+
+  &__n-cycle-suffix {
+    font-size: $font-size-base;
+    color: var(--color-text);
+  }
+
+  &__select--inline,
+  &__input--inline {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-sm;
+    min-width: auto;
+  }
+
+  &__select--inline {
+    width: auto;
+    min-width: 50px;
+  }
+
+  &__input--inline {
+    width: 60px;
+  }
+
+  &__cycle-settings {
+    margin-top: $spacing-md;
+    padding-left: $spacing-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  &__cycle-operator,
+  &__cycle-size {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  &__label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--color-text-secondary);
+  }
+
+  &__select,
+  &__input {
+    padding: $spacing-sm;
+    border: 1px solid var(--color-border);
+    border-radius: $radius-sm;
+    background: var(--color-background);
+    color: var(--color-text);
+    font-size: $font-size-base;
+    font-family: $font-family-base;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+  }
+
+  &__input--error {
+    border-color: var(--color-error);
+  }
+
+  &__validation {
+    font-size: $font-size-sm;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-sm;
+    border: 1px solid;
+
+    &--error {
+      color: var(--color-error);
+      background: var(--color-error-bg);
+      border-color: var(--color-error);
+    }
+
+    &--warning {
+      color: var(--color-warning);
+      background: var(--color-warning-bg);
+      border-color: var(--color-warning);
+    }
+  }
+
+  &__radio-group {
+    @include flex-start;
+    gap: $spacing-lg;
+    flex-wrap: wrap;
+  }
+
+  &__radio {
+    @include flex-start;
+    align-items: center;
+    gap: $spacing-xs;
+    cursor: pointer;
+    font-size: $font-size-base;
+
+    input[type='radio'] {
+      cursor: pointer;
+    }
+  }
+
+  &__custom-separator {
+    margin-top: $spacing-sm;
+    padding: $spacing-sm;
+    border: 1px solid var(--color-border);
+    border-radius: $radius-sm;
+    background: var(--color-background);
+    color: var(--color-text);
+    font-size: $font-size-base;
+    font-family: $font-family-base;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

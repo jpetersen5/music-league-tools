@@ -1,0 +1,181 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.save-load-controls {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    img {
+      width: 16px;
+      height: 16px;
+      filter: var(--icon-filter);
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--color-surface-hover);
+      border-color: var(--color-border-hover);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__load-wrapper {
+    position: relative;
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + $spacing-xs);
+    right: 0;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    box-shadow: 0 4px 12px var(--color-shadow);
+    z-index: $z-modal;
+    @include custom-scrollbar;
+  }
+
+  &__dropdown-item {
+    @include flex-between;
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    transition: background $transition-fast;
+
+    &:hover {
+      background: var(--color-surface-hover);
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+
+  &__dropdown-name {
+    font-size: $font-size-sm;
+    @include truncate;
+    flex: 1;
+  }
+
+  &__delete-btn {
+    padding: $spacing-xs;
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    background: none;
+    border: none;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      color: #ff4444;
+      background: rgba(255, 0, 0, 0.1);
+    }
+  }
+
+  &__dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    @include flex-center;
+    z-index: $z-modal;
+  }
+
+  &__dialog {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-lg;
+    padding: $spacing-xl;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 24px var(--color-shadow);
+
+    h3 {
+      margin: 0 0 $spacing-md 0;
+    }
+  }
+
+  &__input {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-base;
+    background: var(--color-background);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-sm;
+    margin-bottom: $spacing-md;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+  }
+
+  &__error {
+    margin-bottom: $spacing-md;
+    padding: $spacing-sm;
+    background: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid #ff4444;
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
+    color: #ff4444;
+  }
+
+  &__dialog-actions {
+    display: flex;
+    gap: $spacing-sm;
+    justify-content: flex-end;
+  }
+
+  &__dialog-btn {
+    padding: $spacing-sm $spacing-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    border: none;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &--secondary {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+
+      &:hover {
+        background: var(--color-surface-hover);
+      }
+    }
+
+    &--primary {
+      background: var(--color-primary);
+      color: white;
+
+      &:hover {
+        background: var(--color-primary-hover);
+      }
+    }
+  }
+}

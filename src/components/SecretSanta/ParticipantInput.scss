@@ -1,0 +1,100 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.participant-input {
+  &__header {
+    @include flex-between;
+    margin-bottom: $spacing-md;
+  }
+
+  h3 {
+    margin: 0;
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__count {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    font-weight: $font-weight-medium;
+  }
+
+  &__settings-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: $spacing-xs;
+    line-height: 1;
+    opacity: 0.6;
+    transition:
+      opacity $transition-fast,
+      transform $transition-fast;
+
+    img {
+      width: 18px;
+      height: 18px;
+      display: block;
+      filter: var(--icon-filter);
+    }
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__error-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background: #ff4444;
+    border-radius: 50%;
+    border: 1px solid var(--color-background);
+  }
+
+  &__textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: $spacing-md;
+    font-family: $font-family-mono;
+    font-size: $font-size-sm;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    resize: vertical;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+
+    &::placeholder {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__warning {
+    @include message-warning;
+    margin-top: $spacing-md;
+    padding: $spacing-sm $spacing-md;
+  }
+
+  &__error {
+    @include message-error;
+    margin-top: $spacing-md;
+    padding: $spacing-sm $spacing-md;
+  }
+}

@@ -1,0 +1,30 @@
+@use '../../styles/variables' as *;
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+
+  &__tab {
+    flex: 1;
+    padding: $spacing-sm $spacing-md;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-secondary);
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover:not(&--active) {
+      background: var(--color-background);
+      color: var(--color-text);
+    }
+
+    &--active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      background: var(--color-background);
+    }
+  }
+}
