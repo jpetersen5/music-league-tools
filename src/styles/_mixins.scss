@@ -38,6 +38,12 @@
   align-items: center;
 }
 
+@mixin flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 // Card styling
 @mixin card {
   background: var(--color-surface);
@@ -91,4 +97,44 @@
   -webkit-line-clamp: $lines;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+// Message styling
+@mixin message-base {
+  margin-top: $spacing-sm;
+  padding: $spacing-xs $spacing-sm;
+  border-left: 3px solid;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+}
+
+@mixin message-error {
+  @include message-base;
+  background: rgba(255, 0, 0, 0.1);
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
+@mixin message-warning {
+  @include message-base;
+  background: rgba(255, 165, 0, 0.1);
+  border-color: orange;
+  color: orange;
+}
+
+@mixin message-success {
+  @include message-base;
+  background: rgba(76, 175, 80, 0.1);
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+// Icon button styling
+@mixin icon-button($size: 16px) {
+  img {
+    width: $size;
+    height: $size;
+    display: block;
+    filter: var(--icon-filter);
+  }
 }
