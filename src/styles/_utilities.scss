@@ -1,0 +1,220 @@
+@use './variables' as *;
+
+// Utility classes for common patterns
+
+// Display utilities
+.u-flex {
+  display: flex;
+}
+
+.u-flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.u-flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.u-flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.u-flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Spacing utilities
+.u-gap-xs {
+  gap: $spacing-xs;
+}
+
+.u-gap-sm {
+  gap: $spacing-sm;
+}
+
+.u-gap-md {
+  gap: $spacing-md;
+}
+
+.u-gap-lg {
+  gap: $spacing-lg;
+}
+
+.u-gap-xl {
+  gap: $spacing-xl;
+}
+
+// Margin utilities
+.u-mb-xs {
+  margin-bottom: $spacing-xs;
+}
+
+.u-mb-sm {
+  margin-bottom: $spacing-sm;
+}
+
+.u-mb-md {
+  margin-bottom: $spacing-md;
+}
+
+.u-mb-lg {
+  margin-bottom: $spacing-lg;
+}
+
+.u-mb-xl {
+  margin-bottom: $spacing-xl;
+}
+
+.u-mt-xs {
+  margin-top: $spacing-xs;
+}
+
+.u-mt-sm {
+  margin-top: $spacing-sm;
+}
+
+.u-mt-md {
+  margin-top: $spacing-md;
+}
+
+.u-mt-lg {
+  margin-top: $spacing-lg;
+}
+
+.u-mt-xl {
+  margin-top: $spacing-xl;
+}
+
+// Text utilities
+.u-text-center {
+  text-align: center;
+}
+
+.u-text-left {
+  text-align: left;
+}
+
+.u-text-right {
+  text-align: right;
+}
+
+.u-text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.u-text-primary {
+  color: var(--color-primary);
+}
+
+.u-text-error {
+  color: var(--color-error);
+}
+
+.u-text-warning {
+  color: var(--color-warning);
+}
+
+.u-text-success {
+  color: var(--color-success);
+}
+
+// Font weight utilities
+.u-fw-normal {
+  font-weight: $font-weight-normal;
+}
+
+.u-fw-medium {
+  font-weight: $font-weight-medium;
+}
+
+.u-fw-semibold {
+  font-weight: $font-weight-semibold;
+}
+
+.u-fw-bold {
+  font-weight: $font-weight-bold;
+}
+
+// Font size utilities
+.u-fs-xs {
+  font-size: $font-size-xs;
+}
+
+.u-fs-sm {
+  font-size: $font-size-sm;
+}
+
+.u-fs-base {
+  font-size: $font-size-base;
+}
+
+.u-fs-lg {
+  font-size: $font-size-lg;
+}
+
+.u-fs-xl {
+  font-size: $font-size-xl;
+}
+
+// Border radius utilities
+.u-rounded-sm {
+  border-radius: $radius-sm;
+}
+
+.u-rounded-md {
+  border-radius: $radius-md;
+}
+
+.u-rounded-lg {
+  border-radius: $radius-lg;
+}
+
+.u-rounded-xl {
+  border-radius: $radius-xl;
+}
+
+// Width utilities
+.u-w-full {
+  width: 100%;
+}
+
+.u-w-auto {
+  width: auto;
+}
+
+// Display utilities
+.u-hidden {
+  display: none;
+}
+
+.u-visible {
+  visibility: visible;
+}
+
+.u-invisible {
+  visibility: hidden;
+}
+
+// Overflow utilities
+.u-overflow-auto {
+  overflow: auto;
+}
+
+.u-overflow-hidden {
+  overflow: hidden;
+}
+
+.u-overflow-x-auto {
+  overflow-x: auto;
+}
+
+.u-overflow-y-auto {
+  overflow-y: auto;
+}

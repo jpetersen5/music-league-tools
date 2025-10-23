@@ -10,7 +10,7 @@ export const useTheme = () => {
   }, [theme])
 
   const toggleTheme = () => {
-    const newTheme: Theme = theme === 'dark' ? 'light' : 'dark'
+    const newTheme = theme === 'dark' ? ('light' as const) : ('dark' as const)
     setTheme(newTheme)
     setStoredTheme(newTheme)
   }

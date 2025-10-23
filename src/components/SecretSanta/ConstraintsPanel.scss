@@ -123,8 +123,8 @@
     transition: all $transition-fast;
 
     &--invalid {
-      border-color: #ff4444;
-      background: rgba(255, 0, 0, 0.05);
+      border-color: var(--color-error);
+      background: var(--color-error-bg);
     }
 
     &:hover {
@@ -147,7 +147,7 @@
     transition: color $transition-fast;
 
     &:hover {
-      color: #ff4444;
+      color: var(--color-error);
     }
   }
 

@@ -3,8 +3,34 @@
 
 .save-load-controls {
   display: flex;
+  flex-direction: column;
   gap: $spacing-sm;
-  align-items: center;
+  position: relative;
+
+  &__error-banner {
+    @include message-error;
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+    border-radius: $radius-sm;
+    animation: slideDown 0.2s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+  }
 
   &__btn {
     display: flex;
@@ -88,8 +114,8 @@
     transition: all $transition-fast;
 
     &:hover {
-      color: #ff4444;
-      background: rgba(255, 0, 0, 0.1);
+      color: var(--color-error);
+      background: var(--color-error-bg);
     }
   }
 
@@ -135,13 +161,9 @@
   }
 
   &__error {
+    @include message-error;
     margin-bottom: $spacing-md;
     padding: $spacing-sm;
-    background: rgba(255, 0, 0, 0.1);
-    border-left: 3px solid #ff4444;
-    border-radius: $radius-sm;
-    font-size: $font-size-sm;
-    color: #ff4444;
   }
 
   &__dialog-actions {

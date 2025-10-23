@@ -1,0 +1,70 @@
+@use '@/styles/variables/colors' as *;
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+
+  &--small {
+    .loading-spinner__circle {
+      width: 24px;
+      height: 24px;
+      border-width: 2px;
+    }
+
+    .loading-spinner__message {
+      font-size: 0.875rem;
+    }
+  }
+
+  &--medium {
+    .loading-spinner__circle {
+      width: 40px;
+      height: 40px;
+      border-width: 3px;
+    }
+
+    .loading-spinner__message {
+      font-size: 1rem;
+    }
+  }
+
+  &--large {
+    .loading-spinner__circle {
+      width: 60px;
+      height: 60px;
+      border-width: 4px;
+    }
+
+    .loading-spinner__message {
+      font-size: 1.125rem;
+    }
+  }
+
+  &__spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__circle {
+    border-radius: 50%;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    animation: spin 0.8s linear infinite;
+  }
+
+  &__message {
+    margin: 0;
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

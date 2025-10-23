@@ -20,19 +20,27 @@ export const LoadMenu = ({ isOpen, configurations, onLoad, onDelete }: LoadMenuP
   if (!isOpen || configurations.length === 0) return null
 
   return (
-    <div className="save-load-controls__dropdown">
+    <div className="save-load-controls__dropdown" role="menu" aria-label="Saved configurations">
       {configurations.map(config => (
         <div
           key={config.name}
           className="save-load-controls__dropdown-item"
           onClick={() => onLoad(config)}
+          role="menuitem"
+          tabIndex={0}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onLoad(config)
+            }
+          }}
         >
           <span className="save-load-controls__dropdown-name">{config.name}</span>
           <button
             className="save-load-controls__delete-btn"
             onClick={e => handleDelete(config.name, e)}
             type="button"
-            aria-label="Delete"
+            aria-label={`Delete ${config.name}`}
           >
             ✕
           </button>

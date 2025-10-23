@@ -43,3 +43,4 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 Gemfile.lock
+settings.local.json

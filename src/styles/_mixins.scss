@@ -110,23 +110,23 @@
 
 @mixin message-error {
   @include message-base;
-  background: rgba(255, 0, 0, 0.1);
-  border-color: #ff4444;
-  color: #ff4444;
+  background: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 @mixin message-warning {
   @include message-base;
-  background: rgba(255, 165, 0, 0.1);
-  border-color: orange;
-  color: orange;
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
 }
 
 @mixin message-success {
   @include message-base;
-  background: rgba(76, 175, 80, 0.1);
-  border-color: #4caf50;
-  color: #4caf50;
+  background: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
 // Icon button styling
@@ -136,5 +136,81 @@
     height: $size;
     display: block;
     filter: var(--icon-filter);
+  }
+}
+
+// Button base styling
+@mixin button-base {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: 1px solid var(--color-border);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: var(--color-surface);
+  color: var(--color-text);
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border-hover);
+  }
+}
+
+// Tab component styling
+@mixin tabs-container {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+@mixin tab-button {
+  flex: 1;
+  padding: $spacing-sm $spacing-md;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(.active) {
+    background: var(--color-background);
+    color: var(--color-text);
+  }
+
+  &.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    background: var(--color-background);
   }
 }

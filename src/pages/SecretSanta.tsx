@@ -37,6 +37,7 @@ export const SecretSanta = () => {
 
   const [result, setResult] = useState<GenerationResult | null>(null)
   const [lastGenerationSnapshot, setLastGenerationSnapshot] = useState<string>('')
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const [currentConfigName, setCurrentConfigName] = useState<string | null>(null)
   const [savedSnapshot, setSavedSnapshot] = useState<string>('')
@@ -51,47 +52,99 @@ export const SecretSanta = () => {
   )
 
   const duplicates = useMemo(() => detectDuplicates(participants), [participants])
-  const hasExactDuplicates = duplicates.some(d => d.isExact)
+
+  const hasExactDuplicates = useMemo(() => duplicates.some(d => d.isExact), [duplicates])
 
   const currentSnapshot = useMemo(
     () => createConfigSnapshot(participants, settings, bannedPairings, forcedPairings),
     [participants, settings, bannedPairings, forcedPairings]
   )
 
-  const hasInputChanged = currentSnapshot !== lastGenerationSnapshot && result !== null
-  const hasUnsavedChanges = currentSnapshot !== savedSnapshot && participants.length > 0
+  const hasInputChanged = useMemo(
+    () => currentSnapshot !== lastGenerationSnapshot && result !== null,
+    [currentSnapshot, lastGenerationSnapshot, result]
+  )
 
-  const canGenerate =
-    participants.length > 0 &&
-    !hasExactDuplicates &&
-    bannedPairings.every(bp => participants.includes(bp.from) && participants.includes(bp.to)) &&
-    forcedPairings.every(fp => participants.includes(fp.from) && participants.includes(fp.to))
+  const hasUnsavedChanges = useMemo(
+    () => currentSnapshot !== savedSnapshot && participants.length > 0,
+    [currentSnapshot, savedSnapshot, participants.length]
+  )
+
+  const canGenerate = useMemo(
+    () =>
+      participants.length > 0 &&
+      !hasExactDuplicates &&
+      bannedPairings.every(bp => participants.includes(bp.from) && participants.includes(bp.to)) &&
+      forcedPairings.every(fp => participants.includes(fp.from) && participants.includes(fp.to)),
+    [participants, hasExactDuplicates, bannedPairings, forcedPairings]
+  )
 
   // Track save action trigger from keyboard
   const [triggerSaveDialog, setTriggerSaveDialog] = useState(0)
 
-  const handleGenerate = () => {
-    const generationResult = generatePairings(
-      participants,
-      settings,
-      bannedPairings,
-      forcedPairings
-    )
-    setResult(generationResult)
-    setLastGenerationSnapshot(currentSnapshot)
-  }
+  const handleGenerate = useCallback(async () => {
+    setIsGenerating(true)
 
-  const handleRegenerate = () => {
-    // Use the snapshot from last generation, not current inputs
-    const snapshot = JSON.parse(lastGenerationSnapshot)
-    const generationResult = generatePairings(
-      snapshot.participants,
-      snapshot.settings,
-      snapshot.bannedPairings,
-      snapshot.forcedPairings
-    )
-    setResult(generationResult)
-  }
+    // Use setTimeout to allow UI to update with loading state
+    setTimeout(() => {
+      try {
+        const generationResult = generatePairings(
+          participants,
+          settings,
+          bannedPairings,
+          forcedPairings
+        )
+        setResult(generationResult)
+        setLastGenerationSnapshot(currentSnapshot)
+      } catch (error) {
+        console.error('Error generating pairings:', error)
+        setResult({
+          pairings: [],
+          success: false,
+          warning: error instanceof Error ? error.message : 'An unexpected error occurred',
+        })
+      } finally {
+        setIsGenerating(false)
+      }
+    }, 50)
+  }, [participants, settings, bannedPairings, forcedPairings, currentSnapshot])
+
+  const handleRegenerate = useCallback(async () => {
+    setIsGenerating(true)
+
+    // Use setTimeout to allow UI to update with loading state
+    setTimeout(() => {
+      try {
+        // Use the snapshot from last generation, not current inputs
+        const snapshot = JSON.parse(lastGenerationSnapshot)
+
+        // Validate snapshot structure
+        if (!snapshot.participants || !Array.isArray(snapshot.participants)) {
+          throw new Error('Invalid snapshot: missing or invalid participants')
+        }
+
+        const generationResult = generatePairings(
+          snapshot.participants,
+          snapshot.settings,
+          snapshot.bannedPairings || [],
+          snapshot.forcedPairings || []
+        )
+        setResult(generationResult)
+      } catch (error) {
+        console.error('Error regenerating pairings:', error)
+        setResult({
+          pairings: [],
+          success: false,
+          warning:
+            error instanceof Error
+              ? `Regeneration failed: ${error.message}`
+              : 'Failed to regenerate pairings',
+        })
+      } finally {
+        setIsGenerating(false)
+      }
+    }, 50)
+  }, [lastGenerationSnapshot])
 
   const { handleBanPairing, handleForcePairing, handleRemoveBanned, handleRemoveForced } =
     usePairingConstraints(bannedPairings, forcedPairings, setBannedPairings, setForcedPairings)
@@ -208,10 +261,15 @@ export const SecretSanta = () => {
           <button
             className="secret-santa__generate-btn"
             onClick={handleGenerate}
-            disabled={!canGenerate}
+            disabled={!canGenerate || isGenerating}
             type="button"
+            aria-label={
+              isGenerating ? 'Generating pairings in progress' : 'Generate Secret Santa pairings'
+            }
+            aria-live="polite"
+            aria-busy={isGenerating}
           >
-            Generate Pairings
+            {isGenerating ? 'Generating...' : 'Generate Pairings'}
           </button>
         </div>
 
@@ -228,6 +286,7 @@ export const SecretSanta = () => {
             forcedPairings={forcedPairings}
             onRegenerate={handleRegenerate}
             hasInputChanged={hasInputChanged}
+            isGenerating={isGenerating}
           />
         </div>
       </div>

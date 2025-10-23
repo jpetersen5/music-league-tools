@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,12 +7,12 @@
     <script>
       // GitHub Pages SPA redirect trick
       // Store the path in sessionStorage and redirect to index.html
-      sessionStorage.redirect = location.pathname + location.search + location.hash;
+      sessionStorage.redirect = location.pathname + location.search + location.hash
       location.replace(
         location.origin +
           location.pathname.split('/').slice(0, -1).join('/') +
           (location.pathname.endsWith('/') ? '' : '/')
-      );
+      )
     </script>
   </head>
   <body></body>

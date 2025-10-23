@@ -102,6 +102,13 @@ export const ConstraintsPanel = ({
       return
     }
 
+    // Security: Enforce 1MB file size limit to prevent DoS
+    const MAX_FILE_SIZE = 1024 * 1024 // 1MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError('File size exceeds 1MB limit')
+      return
+    }
+
     try {
       const content = await file.text()
       const parsed = parseConstraintsFile(content)
@@ -143,7 +150,7 @@ export const ConstraintsPanel = ({
       }
 
       setFileError(null)
-    } catch (_err) {
+    } catch {
       setFileError('Failed to read file')
     }
   }
@@ -188,6 +195,7 @@ export const ConstraintsPanel = ({
           accept=".txt"
           onChange={handleFileUpload}
           style={{ display: 'none' }}
+          aria-label="Upload constraints file"
         />
       </div>
 
@@ -229,8 +237,14 @@ export const ConstraintsPanel = ({
           onChange={e => setFromInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
           list={`${activeTab}-from-datalist`}
+          aria-label={`${activeTab === 'banned' ? 'Banned' : 'Forced'} pairing from participant`}
+          aria-describedby={
+            error ? 'constraints-error' : fileError ? 'constraints-file-error' : undefined
+          }
         />
-        <span className="constraints-panel__arrow">→</span>
+        <span className="constraints-panel__arrow" aria-hidden="true">
+          →
+        </span>
         <input
           type="text"
           className="constraints-panel__input"
@@ -239,12 +253,17 @@ export const ConstraintsPanel = ({
           onChange={e => setToInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
           list={`${activeTab}-to-datalist`}
+          aria-label={`${activeTab === 'banned' ? 'Banned' : 'Forced'} pairing to participant`}
+          aria-describedby={
+            error ? 'constraints-error' : fileError ? 'constraints-file-error' : undefined
+          }
         />
         <button
           className="constraints-panel__add-btn"
           onClick={handleAdd}
           type="button"
           disabled={participants.length < 2}
+          aria-label={`Add ${activeTab === 'banned' ? 'banned' : 'forced'} pairing`}
         >
           +
         </button>
@@ -262,15 +281,23 @@ export const ConstraintsPanel = ({
         </datalist>
       </div>
 
-      {error && <div className="constraints-panel__error">❌ {error}</div>}
-      {fileError && <div className="constraints-panel__error">❌ {fileError}</div>}
+      {error && (
+        <div className="constraints-panel__error" role="alert" id="constraints-error">
+          ❌ {error}
+        </div>
+      )}
+      {fileError && (
+        <div className="constraints-panel__error" role="alert" id="constraints-file-error">
+          ❌ {fileError}
+        </div>
+      )}
       {unmatchedNames.length > 0 && (
-        <div className="constraints-panel__warning">
+        <div className="constraints-panel__warning" role="status">
           ⚠️ Names not found in participant list: {unmatchedNames.join(', ')}
         </div>
       )}
       {invalidConstraints.length > 0 && (
-        <div className="constraints-panel__warning">
+        <div className="constraints-panel__warning" role="status">
           ⚠️ {invalidConstraints.length} pairing{invalidConstraints.length !== 1 ? 's' : ''}{' '}
           reference{invalidConstraints.length === 1 ? 's' : ''} participants not in the list
         </div>

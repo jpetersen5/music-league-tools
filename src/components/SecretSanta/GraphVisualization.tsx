@@ -43,6 +43,7 @@ export const GraphVisualization = ({ pairings, participants }: GraphVisualizatio
     const cycleGroups: CycleGroup[] = []
     const numCycles = detectedCycles.length
 
+    // Arrange cycles in a grid layout (square root for balanced rows/cols)
     const cols = Math.ceil(Math.sqrt(numCycles))
     const rows = Math.ceil(numCycles / cols)
     const cellWidth = width / cols
@@ -55,7 +56,7 @@ export const GraphVisualization = ({ pairings, participants }: GraphVisualizatio
       const cellCenterX = (col + 0.5) * cellWidth
       const cellCenterY = (row + 0.5) * cellHeight
 
-      // Radius based on cycle size - give more space, no overlap prevention needed
+      // Scale radius by cycle size (more participants = larger circle)
       const maxRadius = Math.min(cellWidth, cellHeight) / 2 - 80
       const radius = Math.min(maxRadius, 40 + cycle.length * 15)
 
@@ -173,12 +174,14 @@ export const GraphVisualization = ({ pairings, participants }: GraphVisualizatio
       const mouseX = e.clientX - rect.left
       const mouseY = e.clientY - rect.top
 
+      // Calculate point in SVG space before zoom
       const pointX = (mouseX - transform.x) / transform.scale
       const pointY = (mouseY - transform.y) / transform.scale
 
       const delta = e.deltaY > 0 ? 0.9 : 1.1
       const newScale = Math.max(0.1, Math.min(5, transform.scale * delta))
 
+      // Zoom towards mouse cursor (keep point under mouse stationary)
       const newX = mouseX - pointX * newScale
       const newY = mouseY - pointY * newScale
 

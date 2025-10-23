@@ -1,10 +1,11 @@
-import type { Theme } from '@/types'
+import { isTheme, type Theme } from '@/types'
 
-const THEME_KEY = 'music-league-tools-theme'
+const THEME_KEY = 'music-league-tools-theme' as const
+const DEFAULT_THEME: Theme = 'dark' as const
 
 export const getStoredTheme = (): Theme => {
   const stored = localStorage.getItem(THEME_KEY)
-  return stored === 'light' ? 'light' : 'dark'
+  return stored && isTheme(stored) ? stored : DEFAULT_THEME
 }
 
 export const setStoredTheme = (theme: Theme): void => {

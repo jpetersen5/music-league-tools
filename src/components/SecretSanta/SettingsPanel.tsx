@@ -108,7 +108,7 @@ export const SettingsPanel = ({
 
   // Handle click outside to close popover
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return undefined
 
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -134,7 +134,7 @@ export const SettingsPanel = ({
 
   // Handle Escape key to close
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return undefined
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -159,9 +159,14 @@ export const SettingsPanel = ({
           top: `${popoverPosition.top}px`,
           left: `${popoverPosition.left}px`,
         }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-panel-title"
       >
         <div className="settings-panel__header">
-          <h3 className="settings-panel__title">Settings</h3>
+          <h3 className="settings-panel__title" id="settings-panel-title">
+            Settings
+          </h3>
           <button
             className="settings-panel__close"
             onClick={onClose}
@@ -181,11 +186,14 @@ export const SettingsPanel = ({
                 type="checkbox"
                 checked={settings.useHamiltonianCycle}
                 onChange={e => handleHamiltonianToggle(e.target.checked)}
+                aria-label="Enable Hamiltonian Cycle"
+                aria-describedby="hamiltonian-cycle-desc"
               />
               <span>Hamiltonian Cycle</span>
               <span
                 className="settings-panel__tooltip"
                 title="Create one long cycle connecting all participants."
+                id="hamiltonian-cycle-desc"
               >
                 <img src={infoIcon} alt="Info" />
               </span>
@@ -200,6 +208,7 @@ export const SettingsPanel = ({
                   checked={settings.useHamiltonianCycle || enableNCycle}
                   onChange={e => handleNCycleToggle(e.target.checked)}
                   disabled={settings.useHamiltonianCycle}
+                  aria-label="Enable N-cycle constraint"
                 />
                 <span>Force</span>
               </label>
@@ -212,6 +221,7 @@ export const SettingsPanel = ({
                     className="settings-panel__select settings-panel__select--inline"
                     value={cycleOperator}
                     onChange={e => handleOperatorChange(e.target.value as CycleOperator)}
+                    aria-label="Cycle size operator"
                   >
                     <option value="equal">=</option>
                     <option value="less">&lt;</option>
@@ -234,6 +244,9 @@ export const SettingsPanel = ({
                       }
                     }}
                     placeholder="N"
+                    aria-label="Cycle size value"
+                    aria-describedby={hasValidationError ? 'settings-validation-error' : undefined}
+                    aria-invalid={hasValidationError}
                   />
                   <span className="settings-panel__n-cycle-suffix">-cycle</span>
                 </div>
@@ -257,6 +270,8 @@ export const SettingsPanel = ({
                     ? 'settings-panel__validation--error'
                     : 'settings-panel__validation--warning'
                 }`}
+                role={validationMessage.type === 'error' ? 'alert' : 'status'}
+                id={validationMessage.type === 'error' ? 'settings-validation-error' : undefined}
               >
                 {validationMessage.type === 'error' ? '❌' : '⚠️'} {validationMessage.text}
               </div>
@@ -270,6 +285,7 @@ export const SettingsPanel = ({
               className="settings-panel__select"
               value={separatorType}
               onChange={e => onSeparatorTypeChange(e.target.value as SeparatorType)}
+              aria-label="Participant separator type"
             >
               <option value="newline">Newline</option>
               <option value="comma">Comma</option>
@@ -284,6 +300,7 @@ export const SettingsPanel = ({
                 onChange={e => onCustomSeparatorChange(e.target.value)}
                 placeholder="Enter separator (e.g. |, -, .)"
                 maxLength={10}
+                aria-label="Custom separator characters"
               />
             )}
           </div>

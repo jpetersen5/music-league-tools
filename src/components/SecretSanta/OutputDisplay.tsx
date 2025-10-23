@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import type { Pairing, Constraint, GenerationResult, Participant } from '@/types'
 import { detectCycles, downloadTextFile, isPairingInList } from '@/utils/secretSanta'
 import { CONFIRM_BAN_ALL } from '@/constants/secretSanta'
-import { PairingBrick } from './PairingBrick'
+import { PairingBrickWrapper } from './PairingBrickWrapper'
 import copyIcon from '/copy.svg'
 import resetIcon from '/reset.svg'
 import downloadIcon from '/download.svg'
@@ -21,6 +21,7 @@ interface OutputDisplayProps {
   forcedPairings: Constraint[]
   onRegenerate: () => void
   hasInputChanged: boolean
+  isGenerating?: boolean
 }
 
 export const OutputDisplay = ({
@@ -35,8 +36,10 @@ export const OutputDisplay = ({
   forcedPairings,
   onRegenerate,
   hasInputChanged,
+  isGenerating = false,
 }: OutputDisplayProps) => {
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState<string | null>(null)
 
   const sortedCycles = useMemo(() => {
     if (!result || result.pairings.length === 0) return []
@@ -56,29 +59,90 @@ export const OutputDisplay = ({
     })
   }, [result, participants])
 
+  const handleCopy = useCallback(async () => {
+    if (!result) return
+
+    const text = result.pairings.map(p => `${p.from} → ${p.to}`).join('\n')
+
+    try {
+      // Check if clipboard API is available
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API not available')
+      }
+
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setCopyError(null)
+
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+
+      // Show error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to copy to clipboard'
+
+      setCopyError(errorMessage)
+      setCopied(false)
+
+      // Clear error after 3 seconds
+      setTimeout(() => setCopyError(null), 3000)
+
+      // Fallback: Try to use deprecated execCommand as backup
+      try {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+
+        const success = document.execCommand('copy')
+        document.body.removeChild(textarea)
+
+        if (success) {
+          setCopied(true)
+          setCopyError(null)
+          setTimeout(() => setCopied(false), 2000)
+        }
+      } catch (fallbackError) {
+        console.error('Fallback copy also failed:', fallbackError)
+      }
+    }
+  }, [result])
+
+  const handleDownload = useCallback(() => {
+    if (!result) return
+
+    try {
+      const text = result.pairings.map(p => `${p.from} → ${p.to}`).join('\n')
+      downloadTextFile(text, 'secret-santa-pairings.txt')
+    } catch (error) {
+      console.error('Failed to download file:', error)
+      setCopyError('Failed to download file')
+      setTimeout(() => setCopyError(null), 3000)
+    }
+  }, [result])
+
+  const isPairingBanned = useCallback(
+    (pairing: Pairing) => isPairingInList(pairing, bannedPairings),
+    [bannedPairings]
+  )
+
+  const isPairingForced = useCallback(
+    (pairing: Pairing) => isPairingInList(pairing, forcedPairings),
+    [forcedPairings]
+  )
+
+  const handleBanAllWithConfirm = useCallback(() => {
+    if (confirm(CONFIRM_BAN_ALL)) {
+      onBanAll()
+    }
+  }, [onBanAll])
+
   if (!result) {
     return null
   }
-
-  const handleCopy = async () => {
-    const text = result.pairings.map(p => `${p.from} → ${p.to}`).join('\n')
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.error('Failed to copy:', error)
-    }
-  }
-
-  const handleDownload = () => {
-    const text = result.pairings.map(p => `${p.from} → ${p.to}`).join('\n')
-    downloadTextFile(text, 'secret-santa-pairings.txt')
-  }
-
-  const isPairingBanned = (pairing: Pairing) => isPairingInList(pairing, bannedPairings)
-
-  const isPairingForced = (pairing: Pairing) => isPairingInList(pairing, forcedPairings)
 
   return (
     <div className="output-display">
@@ -87,11 +151,7 @@ export const OutputDisplay = ({
         <div className="output-display__actions">
           <button
             className="output-display__btn output-display__btn--ban-all"
-            onClick={() => {
-              if (confirm(CONFIRM_BAN_ALL)) {
-                onBanAll()
-              }
-            }}
+            onClick={handleBanAllWithConfirm}
             type="button"
             title="Ban all generated pairings"
             aria-label="Ban All"
@@ -101,8 +161,11 @@ export const OutputDisplay = ({
           <button
             className="output-display__btn output-display__btn--regenerate"
             onClick={onRegenerate}
+            disabled={isGenerating}
             type="button"
-            title="Generate a different pairing with the same settings"
+            title={
+              isGenerating ? 'Generating...' : 'Generate a different pairing with the same settings'
+            }
             aria-label="Regenerate"
           >
             <img src={resetIcon} alt="Regenerate" />
@@ -128,16 +191,26 @@ export const OutputDisplay = ({
         </div>
       </div>
 
+      {copyError && (
+        <div className="output-display__error" role="alert">
+          {copyError}
+        </div>
+      )}
+
       {hasInputChanged && (
-        <div className="output-display__warning">
+        <div className="output-display__warning" role="status">
           ⚠️ Inputs have changed since generation. Click "Generate" to use new inputs.
         </div>
       )}
 
-      {result.warning && <div className="output-display__warning">⚠️ {result.warning}</div>}
+      {result.warning && (
+        <div className="output-display__warning" role="status">
+          ⚠️ {result.warning}
+        </div>
+      )}
 
       {!result.success && result.pairings.length === 0 && (
-        <div className="output-display__error">
+        <div className="output-display__error" role="alert">
           ❌ Could not generate valid pairings after {result.attempts ?? 'unknown'} attempts. Please
           adjust your constraints.
         </div>
@@ -148,15 +221,15 @@ export const OutputDisplay = ({
           {sortedCycles.flatMap((cycle, cycleIndex) =>
             [
               ...cycle.map((pairing, pairingIndex) => (
-                <PairingBrick
+                <PairingBrickWrapper
                   key={`${pairing.from}-${pairing.to}-${pairingIndex}`}
                   pairing={pairing}
                   isBanned={isPairingBanned(pairing)}
                   isForced={isPairingForced(pairing)}
-                  onBan={() => onBanPairing(pairing)}
-                  onForce={() => onForcePairing(pairing)}
-                  onRemoveBanned={() => onRemoveBanned(pairing)}
-                  onRemoveForced={() => onRemoveForced(pairing)}
+                  onBanPairing={onBanPairing}
+                  onForcePairing={onForcePairing}
+                  onRemoveBanned={onRemoveBanned}
+                  onRemoveForced={onRemoveForced}
                 />
               )),
               cycleIndex < sortedCycles.length - 1 ? (
@@ -170,7 +243,7 @@ export const OutputDisplay = ({
       )}
 
       {result.success && result.pairings.length > 0 && (
-        <div className="output-display__success">
+        <div className="output-display__success" role="status">
           ✓ Successfully generated {result.pairings.length} pairings in{' '}
           {result.attempts ?? 'unknown'} attempts
         </div>

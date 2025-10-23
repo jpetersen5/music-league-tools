@@ -47,9 +47,9 @@
       color: var(--color-text);
 
       &:hover {
-        background: rgba(255, 68, 68, 0.1);
-        border-color: #ff4444;
-        color: #ff4444;
+        background: var(--color-error-bg);
+        border-color: var(--color-error);
+        color: var(--color-error);
       }
     }
 
@@ -214,21 +214,21 @@
     }
 
     &--remove-ban {
-      background: rgba(255, 68, 68, 0.1);
-      border-color: #ff4444;
+      background: var(--color-error-bg);
+      border-color: var(--color-error);
 
       &:hover {
-        background: #ff4444;
+        background: var(--color-error);
         transform: scale(1.05);
       }
     }
 
     &--remove-force {
-      background: rgba(76, 175, 80, 0.1);
-      border-color: #4caf50;
+      background: var(--color-success-bg);
+      border-color: var(--color-success);
 
       &:hover {
-        background: #4caf50;
+        background: var(--color-success);
         transform: scale(1.05);
       }
     }

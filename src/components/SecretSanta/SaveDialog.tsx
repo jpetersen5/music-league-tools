@@ -51,9 +51,15 @@ export const SaveDialog = ({
   if (!isOpen) return null
 
   return (
-    <div className="save-load-controls__dialog-overlay" onClick={onClose}>
+    <div
+      className="save-load-controls__dialog-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="save-dialog-title"
+    >
       <div className="save-load-controls__dialog" onClick={e => e.stopPropagation()}>
-        <h3>Save Configuration</h3>
+        <h3 id="save-dialog-title">Save Configuration</h3>
         <input
           type="text"
           className="save-load-controls__input"
@@ -62,8 +68,15 @@ export const SaveDialog = ({
           onChange={e => setNameInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSave()}
           autoFocus
+          aria-label="Configuration name"
+          aria-describedby={error ? 'save-dialog-error' : undefined}
+          aria-invalid={!!error}
         />
-        {error && <div className="save-load-controls__error">{error}</div>}
+        {error && (
+          <div className="save-load-controls__error" role="alert" id="save-dialog-error">
+            {error}
+          </div>
+        )}
         <div className="save-load-controls__dialog-actions">
           <button
             className="save-load-controls__dialog-btn save-load-controls__dialog-btn--secondary"

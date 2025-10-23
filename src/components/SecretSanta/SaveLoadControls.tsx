@@ -28,6 +28,8 @@ export const SaveLoadControls = ({
   const [savedConfigs, setSavedConfigs] = useState<SavedConfiguration[]>([])
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showLoadMenu, setShowLoadMenu] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     refreshSavedConfigs()
@@ -39,25 +41,58 @@ export const SaveLoadControls = ({
     }
   }, [triggerSaveDialog])
 
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   const refreshSavedConfigs = () => {
-    setSavedConfigs(getSavedConfigurations())
+    try {
+      setSavedConfigs(getSavedConfigurations())
+    } catch (err) {
+      console.error('Failed to refresh saved configurations:', err)
+      setError('Failed to load saved configurations')
+    }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (currentName) {
       // Quick save to existing name
-      onSave(currentName)
-      setTimeout(() => refreshSavedConfigs(), 100)
+      setIsSaving(true)
+      setError(null)
+
+      try {
+        onSave(currentName)
+        refreshSavedConfigs()
+      } catch (err) {
+        console.error('Failed to save configuration:', err)
+        setError(err instanceof Error ? err.message : 'Failed to save configuration')
+      } finally {
+        setIsSaving(false)
+      }
     } else {
       // Show save dialog for new config
       setShowSaveDialog(true)
     }
   }
 
-  const handleSaveAs = (name: string) => {
-    onSave(name)
-    setShowSaveDialog(false)
-    setTimeout(() => refreshSavedConfigs(), 100)
+  const handleSaveAs = async (name: string) => {
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      onSave(name)
+      setShowSaveDialog(false)
+      refreshSavedConfigs()
+    } catch (err) {
+      console.error('Failed to save configuration:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save configuration')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleLoad = (config: SavedConfiguration) => {
@@ -66,62 +101,87 @@ export const SaveLoadControls = ({
         return
       }
     }
-    onLoad(config)
-    setShowLoadMenu(false)
+
+    try {
+      onLoad(config)
+      setShowLoadMenu(false)
+      setError(null)
+    } catch (err) {
+      console.error('Failed to load configuration:', err)
+      setError('Failed to load configuration')
+    }
   }
 
   const handleDelete = (name: string) => {
-    deleteConfiguration(name)
-    setTimeout(() => refreshSavedConfigs(), 100)
-    // If we deleted the current config, notify parent
-    if (name === currentName && onCurrentConfigDeleted) {
-      onCurrentConfigDeleted()
+    setError(null)
+
+    try {
+      deleteConfiguration(name)
+      refreshSavedConfigs()
+
+      // If we deleted the current config, notify parent
+      if (name === currentName && onCurrentConfigDeleted) {
+        onCurrentConfigDeleted()
+      }
+    } catch (err) {
+      console.error('Failed to delete configuration:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete configuration')
     }
   }
 
   return (
     <div className="save-load-controls">
-      <button
-        className="save-load-controls__btn"
-        onClick={handleSave}
-        disabled={!hasUnsavedChanges}
-        type="button"
-        title={currentName ? `Save to "${currentName}"` : 'Save As...'}
-      >
-        <img src={saveIcon} alt="Save" />
-        <span>Save{hasUnsavedChanges && currentName && '*'}</span>
-      </button>
+      {error && (
+        <div className="save-load-controls__error-banner" role="alert">
+          {error}
+        </div>
+      )}
 
-      <button
-        className="save-load-controls__btn"
-        onClick={() => setShowSaveDialog(true)}
-        type="button"
-        title="Save As..."
-      >
-        Save As...
-      </button>
-
-      <div className="save-load-controls__load-wrapper">
+      <div className="save-load-controls__buttons">
         <button
           className="save-load-controls__btn"
-          onClick={() => {
-            refreshSavedConfigs()
-            setShowLoadMenu(!showLoadMenu)
-          }}
+          onClick={handleSave}
+          disabled={!hasUnsavedChanges || isSaving}
           type="button"
-          disabled={savedConfigs.length === 0}
-          title="Load configuration"
+          title={currentName ? `Save to "${currentName}"` : 'Save As...'}
         >
-          <img src={loadIcon} alt="Load" />
-          <span>Load</span>
+          <img src={saveIcon} alt="Save" />
+          <span>
+            {isSaving ? 'Saving...' : `Save${hasUnsavedChanges && currentName ? '*' : ''}`}
+          </span>
         </button>
 
-        <LoadMenu
-          isOpen={showLoadMenu}
-          configurations={savedConfigs}
-          onLoad={handleLoad}
-          onDelete={handleDelete}
-        />
+        <button
+          className="save-load-controls__btn"
+          onClick={() => setShowSaveDialog(true)}
+          type="button"
+          title="Save As..."
+        >
+          Save As...
+        </button>
+
+        <div className="save-load-controls__load-wrapper">
+          <button
+            className="save-load-controls__btn"
+            onClick={() => {
+              refreshSavedConfigs()
+              setShowLoadMenu(!showLoadMenu)
+            }}
+            type="button"
+            disabled={savedConfigs.length === 0}
+            title="Load configuration"
+          >
+            <img src={loadIcon} alt="Load" />
+            <span>Load</span>
+          </button>
+
+          <LoadMenu
+            isOpen={showLoadMenu}
+            configurations={savedConfigs}
+            onLoad={handleLoad}
+            onDelete={handleDelete}
+          />
+        </div>
       </div>
 
       <SaveDialog

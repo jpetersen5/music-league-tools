@@ -66,16 +66,24 @@ export const ParticipantInput = ({
               : PLACEHOLDER_PARTICIPANT_CUSTOM(customSeparator)
         }
         rows={10}
+        aria-label="Enter participants list"
+        aria-describedby={
+          exactDuplicates.length > 0
+            ? 'participant-errors'
+            : nearDuplicates.length > 0
+              ? 'participant-warnings'
+              : undefined
+        }
       />
 
       {exactDuplicates.length > 0 && (
-        <div className="participant-input__error">
+        <div className="participant-input__error" role="alert" id="participant-errors">
           ❌ Exact duplicates found: {exactDuplicates.map(d => d.value).join(', ')}
         </div>
       )}
 
       {nearDuplicates.length > 0 && (
-        <div className="participant-input__warning">
+        <div className="participant-input__warning" role="status" id="participant-warnings">
           ⚠️ Similar names found: {nearDuplicates.map(d => d.value).join(', ')}
         </div>
       )}

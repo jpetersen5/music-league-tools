@@ -17,6 +17,7 @@ interface GeneratedPairingsPanelProps {
   forcedPairings: Constraint[]
   onRegenerate: () => void
   hasInputChanged: boolean
+  isGenerating?: boolean
 }
 
 export const GeneratedPairingsPanel = ({
@@ -31,6 +32,7 @@ export const GeneratedPairingsPanel = ({
   forcedPairings,
   onRegenerate,
   hasInputChanged,
+  isGenerating = false,
 }: GeneratedPairingsPanelProps) => {
   const [activeView, setActiveView] = useState<'list' | 'graph'>('list')
 
@@ -64,6 +66,7 @@ export const GeneratedPairingsPanel = ({
             forcedPairings={forcedPairings}
             onRegenerate={onRegenerate}
             hasInputChanged={hasInputChanged}
+            isGenerating={isGenerating}
           />
         ) : (
           <GraphVisualization pairings={result.pairings} participants={participants} />

@@ -16,7 +16,7 @@ export const usePopoverPosition = ({
   const [position, setPosition] = useState({ top: 0, left: 0 })
 
   useEffect(() => {
-    if (!isOpen || !anchorRef.current) return
+    if (!isOpen || !anchorRef.current) return undefined
 
     const updatePosition = () => {
       if (!anchorRef.current) return
