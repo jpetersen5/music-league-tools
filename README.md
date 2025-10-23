@@ -70,7 +70,7 @@ The app will be available at [http://localhost:5173/music-league-tools/](http://
 
 ## Deployment
 
-The site is automatically deployed to GitHub Pages when changes are pushed to the `main` branch, available at `https://jpetersen5.github.io/music-league-tools/`
+The site is automatically deployed to GitHub Pages when changes are pushed to the `main` branch, available at https://jpetersen5.github.io/music-league-tools/.
 
 ## License
 
