@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { SavedConfiguration } from '@/types'
-import { getSavedConfigurations, deleteConfiguration } from '@/utils/secretSantaStorage'
+import { getSavedConfigurations, deleteConfiguration } from '@/utils/secretSanta/storage'
 import { CONFIRM_LOAD_UNSAVED } from '@/constants/secretSanta'
 import { SaveDialog } from './SaveDialog'
 import { LoadMenu } from './LoadMenu'

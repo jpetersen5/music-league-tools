@@ -17,7 +17,7 @@ import {
   generatePairings,
   createConfigSnapshot,
 } from '@/utils/secretSanta'
-import { saveConfiguration } from '@/utils/secretSantaStorage'
+import { saveConfiguration } from '@/utils/secretSanta/storage'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePairingConstraints } from '@/hooks/usePairingConstraints'
