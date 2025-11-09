@@ -4,6 +4,11 @@
 // Uncomment to use utility classes
 // @use './utilities';
 
+// Component styles
+@use './components/toast';
+@use './components/alert';
+@use './components/validation';
+
 // CSS Custom Properties for theming
 :root[data-theme='dark'] {
   --color-background: #0f0f0f;

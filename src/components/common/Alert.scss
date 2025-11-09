@@ -1,0 +1,120 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  border-left-width: 4px;
+  margin-bottom: 16px;
+  position: relative;
+  background: var(--alert-bg);
+  color: var(--alert-text);
+
+  &__icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: var(--alert-title);
+  }
+
+  &__message {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--alert-message);
+  }
+
+  &__dismiss {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--alert-dismiss);
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.7;
+    }
+
+    &:active {
+      opacity: 0.5;
+    }
+  }
+
+  // Variant styles
+  &--error {
+    --alert-bg: var(--color-error-bg);
+    --alert-text: var(--color-error);
+    --alert-title: var(--color-error);
+    --alert-message: var(--color-error);
+    --alert-dismiss: var(--color-error);
+    border-color: var(--color-error);
+  }
+
+  &--warning {
+    --alert-bg: var(--color-warning-bg);
+    --alert-text: var(--color-warning);
+    --alert-title: var(--color-warning);
+    --alert-message: var(--color-warning);
+    --alert-dismiss: var(--color-warning);
+    border-color: var(--color-warning);
+  }
+
+  &--success {
+    --alert-bg: var(--color-success-bg);
+    --alert-text: var(--color-success);
+    --alert-title: var(--color-success);
+    --alert-message: var(--color-success);
+    --alert-dismiss: var(--color-success);
+    border-color: var(--color-success);
+  }
+
+  &--info {
+    --alert-bg: rgba(99, 102, 241, 0.1);
+    --alert-text: var(--color-primary);
+    --alert-title: var(--color-primary);
+    --alert-message: var(--color-primary);
+    --alert-dismiss: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  // Mobile responsive
+  @media (max-width: 768px) {
+    padding: 12px;
+    gap: 8px;
+
+    &__icon {
+      font-size: 18px;
+    }
+
+    &__title {
+      font-size: 15px;
+    }
+
+    &__message {
+      font-size: 13px;
+    }
+  }
+}

@@ -1,0 +1,97 @@
+// Toast notification styles
+// Uses CSS variables for theme support
+@use '../variables' as *;
+
+// CSS Variables for toast styling
+:root[data-theme='light'] {
+  // Toast container colors
+  --toast-bg: #ffffff;
+  --toast-text: #111827;
+  --toast-border: #e5e7eb;
+}
+
+:root[data-theme='dark'] {
+  // Toast container colors
+  --toast-bg: #1a1a1a;
+  --toast-text: #e8e8e8;
+  --toast-border: #2a2a2a;
+}
+
+// Toast container responsive styles
+@media (max-width: 768px) {
+  // On mobile, toasts appear at top with full width
+  div[data-rich-toast] {
+    max-width: calc(100vw - 32px) !important;
+    width: 100% !important;
+  }
+}
+
+// Toast animation overrides
+div[data-rich-toast] {
+  // Smooth slide-in animation
+  animation: toast-slide-in 0.3s ease-out;
+
+  // Add subtle hover effect
+  &:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Success toast specific styling
+div[data-rich-toast][data-type='success'] {
+  border-left: 4px solid var(--color-success);
+}
+
+// Error toast specific styling
+div[data-rich-toast][data-type='error'] {
+  border-left: 4px solid var(--color-error);
+}
+
+// Custom loading spinner for promise toasts
+div[data-rich-toast][data-type='loading'] {
+  border-left: 4px solid var(--color-primary);
+
+  .toast-icon {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Additional toast customizations
+.toast-message {
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
+  font-weight: $font-weight-medium;
+}
+
+// Custom warning and info styles (for use with custom toast variants)
+.toast-warning {
+  border-left: 4px solid var(--color-warning);
+  background: var(--toast-bg);
+  border-color: var(--color-warning);
+}
+
+.toast-info {
+  border-left: 4px solid var(--color-primary);
+  background: var(--toast-bg);
+}
