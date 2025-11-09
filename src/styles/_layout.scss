@@ -44,6 +44,15 @@
   }
 }
 
+.header-actions {
+  @include flex-center;
+  gap: $spacing-md;
+
+  @include mobile {
+    gap: $spacing-sm;
+  }
+}
+
 // Main content area - scrollable
 .app-main {
   flex: 1;

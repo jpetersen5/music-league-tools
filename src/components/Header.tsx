@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
+import { ProfileSwitcher } from './MusicLeague/ProfileSwitcher'
 import { APP_NAME } from '@/utils/constants'
 
 export const Header = () => {
@@ -9,7 +10,10 @@ export const Header = () => {
         <Link to="/">
           <h1 className="app-title">{APP_NAME}</h1>
         </Link>
-        <ThemeToggle />
+        <div className="header-actions">
+          <ProfileSwitcher />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

@@ -194,6 +194,21 @@ export async function profileExists(profileId: ProfileId): Promise<boolean> {
 }
 
 /**
+ * Update profile metadata (name)
+ *
+ * @param profileId - ID of the profile to update
+ * @param metadata - Metadata to update (name)
+ * @returns The updated profile or null if not found
+ * @throws DatabaseError if update fails
+ */
+export async function updateProfileMetadata(
+  profileId: ProfileId,
+  metadata: { name?: string }
+): Promise<Profile | null> {
+  return updateProfile(profileId, metadata)
+}
+
+/**
  * Get profile count
  *
  * @returns Total number of profiles

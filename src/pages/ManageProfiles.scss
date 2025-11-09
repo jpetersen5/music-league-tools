@@ -1,0 +1,231 @@
+/**
+ * Manage Profiles Page Styles
+ *
+ * Page layout with:
+ * - Page header with title and actions
+ * - Delete confirmation dialog
+ *
+ * @module pages/ManageProfiles
+ */
+
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ============================================================================
+// Page Container
+// ============================================================================
+
+.manage-profiles {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+
+  // ============================================================================
+  // Header
+  // ============================================================================
+
+  &__header {
+    @include flex-between;
+    gap: $spacing-lg;
+    padding-bottom: $spacing-lg;
+    border-bottom: 1px solid var(--color-border);
+
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  &__title {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: var(--color-text);
+    margin: 0 0 $spacing-xs 0;
+
+    @include mobile {
+      font-size: $font-size-2xl;
+    }
+  }
+
+  &__description {
+    font-size: $font-size-base;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-md;
+    flex-shrink: 0;
+
+    @include mobile {
+      width: 100%;
+      flex-direction: column;
+    }
+  }
+
+  &__button {
+    padding: $spacing-sm $spacing-lg;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+    transition: all $transition-fast;
+    white-space: nowrap;
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    &--primary {
+      background: var(--color-primary);
+      border: none;
+      color: white;
+
+      &:hover {
+        background: var(--color-primary-hover);
+      }
+    }
+
+    &--secondary {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+
+      &:hover {
+        background: var(--color-surface-hover);
+        border-color: var(--color-border-hover);
+      }
+    }
+
+    @include mobile {
+      width: 100%;
+    }
+  }
+}
+
+// ============================================================================
+// Delete Confirmation Dialog
+// ============================================================================
+
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  @include flex-center;
+  z-index: $z-modal;
+  padding: $spacing-lg;
+  animation: fadeIn 0.2s ease;
+}
+
+.delete-confirm {
+  background: var(--color-surface);
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  max-width: 500px;
+  width: 100%;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: slideUp 0.3s ease;
+
+  &__title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+    margin: 0 0 $spacing-md 0;
+  }
+
+  &__message {
+    font-size: $font-size-base;
+    color: var(--color-text);
+    margin: 0 0 $spacing-md 0;
+
+    strong {
+      font-weight: $font-weight-semibold;
+      color: var(--color-primary);
+    }
+  }
+
+  &__warning {
+    font-size: $font-size-sm;
+    color: rgb(239, 68, 68);
+    background: rgba(239, 68, 68, 0.1);
+    padding: $spacing-md;
+    border-radius: $radius-md;
+    border-left: 4px solid rgb(239, 68, 68);
+    margin: 0 0 $spacing-xl 0;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-md;
+    justify-content: flex-end;
+  }
+
+  &__button {
+    padding: $spacing-sm $spacing-lg;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    &--cancel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+
+      &:hover:not(:disabled) {
+        background: var(--color-surface-hover);
+        border-color: var(--color-border-hover);
+      }
+    }
+
+    &--delete {
+      background: rgb(239, 68, 68);
+      border: none;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: rgb(220, 38, 38);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Animations
+// ============================================================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

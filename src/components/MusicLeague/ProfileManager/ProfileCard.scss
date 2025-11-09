@@ -1,0 +1,197 @@
+/**
+ * Profile Card Styles
+ *
+ * Card component displaying profile information with:
+ * - Profile header (name, league name)
+ * - Statistics grid (rounds, submissions, votes, competitors)
+ * - Metadata (created/updated dates)
+ * - Action buttons (edit, export, delete)
+ *
+ * @module components/MusicLeague/ProfileManager/ProfileCard
+ */
+
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+// ============================================================================
+// Container
+// ============================================================================
+
+.profile-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: all $transition-base;
+
+  &:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  // ============================================================================
+  // Header
+  // ============================================================================
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    padding-bottom: $spacing-sm;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+    margin: 0;
+    @include truncate;
+  }
+
+  &__subtitle {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    margin: 0;
+    @include truncate;
+  }
+
+  // ============================================================================
+  // Statistics Grid
+  // ============================================================================
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  &__stat-label {
+    font-size: $font-size-xs;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: $font-weight-medium;
+  }
+
+  &__stat-value {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--color-primary);
+    line-height: 1;
+  }
+
+  // ============================================================================
+  // Metadata
+  // ============================================================================
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    padding-top: $spacing-sm;
+    border-top: 1px solid var(--color-border);
+  }
+
+  &__meta-item {
+    display: flex;
+    gap: $spacing-xs;
+    font-size: $font-size-sm;
+    margin: 0;
+  }
+
+  &__meta-label {
+    color: var(--color-text-secondary);
+    font-weight: $font-weight-medium;
+  }
+
+  &__meta-value {
+    color: var(--color-text);
+  }
+
+  // ============================================================================
+  // Actions
+  // ============================================================================
+
+  &__actions {
+    display: flex;
+    gap: $spacing-sm;
+    margin-top: auto;
+  }
+
+  &__action {
+    @include flex-center;
+    gap: $spacing-xs;
+    flex: 1;
+    padding: $spacing-sm $spacing-md;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    color: var(--color-text);
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-border-hover);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    &-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      filter: var(--icon-filter);
+    }
+
+    &-text {
+      @include mobile {
+        display: none;
+      }
+    }
+
+    // Specific button variants
+    &--edit:hover {
+      background: var(--color-primary-alpha);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    &--export:hover {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgb(16, 185, 129);
+      color: rgb(16, 185, 129);
+
+      .profile-card__action-icon {
+        filter: brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(1736%)
+          hue-rotate(104deg) brightness(94%) contrast(89%);
+      }
+    }
+
+    &--delete:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgb(239, 68, 68);
+      color: rgb(239, 68, 68);
+
+      .profile-card__action-icon {
+        filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%)
+          hue-rotate(346deg) brightness(100%) contrast(97%);
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout'
 import { Home } from '@/pages/Home'
 import { SecretSanta } from '@/pages/SecretSanta'
 import { AlertTest } from '@/pages/AlertTest'
+import { ManageProfiles } from '@/pages/ManageProfiles'
 import { ToastProvider } from '@/components/common/ToastProvider'
 import { ProfileUploadModal } from '@/components/MusicLeague/ProfileUploadModal'
 import { ProfileProvider } from '@/contexts/ProfileContext'
@@ -47,6 +48,14 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <AlertTest />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="manage-profiles"
+                  element={
+                    <ErrorBoundary>
+                      <ManageProfiles />
                     </ErrorBoundary>
                   }
                 />
