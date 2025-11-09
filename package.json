@@ -17,15 +17,24 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "idb": "^8.0.3",
+    "jszip": "^3.10.1",
+    "papaparse": "^5.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0"
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.0.0",
+    "sentiment": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
+    "@types/jszip": "^3.4.0",
+    "@types/natural": "^5.1.5",
     "@types/node": "^22.10.1",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
+    "@types/sentiment": "^5.0.4",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
     "@vitejs/plugin-react": "^5.0.4",
