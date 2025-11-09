@@ -15,7 +15,11 @@ import { ProfileEditor } from '@/components/MusicLeague/ProfileManager/ProfileEd
 import { ProfileUploadModal } from '@/components/MusicLeague/ProfileUploadModal'
 import type { Profile } from '@/types/musicLeague'
 import { deleteProfile } from '@/services/database/profiles'
-import { exportProfileAsZip } from '@/utils/musicLeague/profileImportExport'
+import { getCompetitorsByProfile } from '@/services/database/competitors'
+import { getRoundsByProfile } from '@/services/database/rounds'
+import { getSubmissionsByProfile } from '@/services/database/submissions'
+import { getVotesByProfile } from '@/services/database/votes'
+import { exportAndDownloadProfile, type ExportData } from '@/utils/musicLeague/profileImportExport'
 import { useToast } from '@/hooks/useToast'
 import './ManageProfiles.scss'
 
@@ -39,7 +43,30 @@ export function ManageProfiles() {
   const handleExport = async (profile: Profile) => {
     try {
       toast.info('Preparing export...')
-      await exportProfileAsZip(profile.id, profile.name)
+
+      // Fetch all data for this profile
+      const [competitors, rounds, submissions, votes] = await Promise.all([
+        getCompetitorsByProfile(profile.id),
+        getRoundsByProfile(profile.id),
+        getSubmissionsByProfile(profile.id),
+        getVotesByProfile(profile.id),
+      ])
+
+      // Build ExportData object - convert database objects to plain objects
+      const data: ExportData = {
+        competitors: competitors.map(c => ({ ...c })),
+        rounds: rounds.map(r => ({ ...r })),
+        submissions: submissions.map(s => ({ ...s })),
+        votes: votes.map(v => ({ ...v })),
+        metadata: {
+          profileName: profile.name,
+          exportDate: new Date().toISOString(),
+          version: '1.0',
+        },
+      }
+
+      // Export and download
+      await exportAndDownloadProfile(profile, data)
       toast.success(`Profile "${profile.name}" exported successfully`)
     } catch (error) {
       console.error('Failed to export profile:', error)

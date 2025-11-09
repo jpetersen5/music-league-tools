@@ -27,8 +27,9 @@ export const Home = () => {
     <div className="home">
       {showNoProfilesAlert && (
         <Alert
-          type="info"
+          variant="info"
           message="No Music League profiles uploaded yet. Upload a profile from the header to get started analyzing your data."
+          dismissible={true}
           onDismiss={handleDismissAlert}
         />
       )}
