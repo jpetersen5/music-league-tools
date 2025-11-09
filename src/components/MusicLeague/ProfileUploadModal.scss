@@ -1,0 +1,516 @@
+/**
+ * Profile Upload Modal Styles
+ *
+ * Comprehensive styles for the profile upload modal including:
+ * - Modal overlay and dialog
+ * - File upload zones with drag-and-drop
+ * - Tab switching between upload modes
+ * - Form inputs and validation
+ * - Success and error states
+ *
+ * @module components/MusicLeague/ProfileUploadModal
+ */
+
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// ============================================================================
+// Modal Overlay & Dialog
+// ============================================================================
+
+.profile-upload-modal {
+  &__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: $z-modal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+    padding: $spacing-lg;
+  }
+
+  &__dialog {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-lg;
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // ============================================================================
+  // Header
+  // ============================================================================
+
+  &__header {
+    position: sticky;
+    top: 0;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: $spacing-lg $spacing-xl;
+    z-index: 1;
+  }
+
+  &__title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+    margin: 0 0 $spacing-xs 0;
+  }
+
+  &__description {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  &__close {
+    position: absolute;
+    top: $spacing-lg;
+    right: $spacing-lg;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: $spacing-xs;
+    border-radius: $radius-sm;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: var(--color-surface-hover);
+      color: var(--color-text);
+    }
+
+    &:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  // ============================================================================
+  // Body
+  // ============================================================================
+
+  &__body {
+    padding: $spacing-xl;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  // ============================================================================
+  // Form Elements
+  // ============================================================================
+
+  &__form-group {
+    margin-bottom: $spacing-lg;
+  }
+
+  &__label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--color-text);
+    margin-bottom: $spacing-xs;
+  }
+
+  &__required {
+    color: var(--color-error);
+  }
+
+  &__input {
+    width: 100%;
+    padding: $spacing-md;
+    font-size: $font-size-base;
+    color: var(--color-text);
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    transition: all $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    &--error {
+      border-color: var(--color-error);
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      }
+    }
+
+    &::placeholder {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__error {
+    margin-top: $spacing-xs;
+    font-size: $font-size-sm;
+    color: var(--color-error);
+  }
+
+  // ============================================================================
+  // Tabs
+  // ============================================================================
+
+  &__tabs {
+    display: flex;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-lg;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__tab {
+    padding: $spacing-md $spacing-lg;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all $transition-fast;
+    margin-bottom: -1px;
+
+    &:hover {
+      color: var(--color-text);
+      background: var(--color-surface-hover);
+    }
+
+    &--active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    &:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+
+    &-icon {
+      width: 16px;
+      height: 16px;
+      margin-right: $spacing-xs;
+      vertical-align: middle;
+      filter: var(--icon-filter);
+    }
+  }
+
+  // ============================================================================
+  // Upload Zone
+  // ============================================================================
+
+  &__upload-zone {
+    border: 2px dashed var(--color-border);
+    border-radius: $radius-md;
+    padding: $spacing-xl;
+    text-align: center;
+    cursor: pointer;
+    transition: all $transition-fast;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      border-color: var(--color-primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    &--dragging {
+      border-color: var(--color-primary);
+      background: rgba(99, 102, 241, 0.1);
+      border-style: solid;
+    }
+
+    &--has-files {
+      border-style: solid;
+      border-color: var(--color-success);
+      background: var(--color-success-bg);
+    }
+  }
+
+  // ============================================================================
+  // CSV Inputs
+  // ============================================================================
+
+  &__csv-inputs {
+    display: grid;
+    gap: $spacing-md;
+  }
+
+  &__csv-input {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+
+    &__label {
+      flex: 1;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: var(--color-text);
+    }
+
+    &__button {
+      @include button-secondary;
+      padding: $spacing-sm $spacing-md;
+      font-size: $font-size-sm;
+    }
+  }
+
+  // ============================================================================
+  // File Card
+  // ============================================================================
+
+  &__file-card {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    width: 100%;
+
+    &__icon {
+      font-size: 24px;
+      flex-shrink: 0;
+
+      img {
+        width: 24px;
+        height: 24px;
+        display: block;
+        filter: var(--icon-filter);
+      }
+    }
+
+    &__info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &__name {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: var(--color-text);
+      @include truncate;
+    }
+
+    &__size {
+      font-size: $font-size-xs;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    &__remove {
+      background: none;
+      border: none;
+      padding: $spacing-xs;
+      font-size: 18px;
+      color: var(--color-error);
+      cursor: pointer;
+      border-radius: $radius-sm;
+      transition: all $transition-fast;
+      flex-shrink: 0;
+
+      &:hover {
+        background: var(--color-error-bg);
+      }
+
+      &:focus {
+        outline: 2px solid var(--color-error);
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  // ============================================================================
+  // Success State
+  // ============================================================================
+
+  &__success {
+    text-align: center;
+    padding: $spacing-xl 0;
+
+    &__icon {
+      font-size: 64px;
+      margin-bottom: $spacing-md;
+      animation: checkPulse 0.6s ease;
+
+      img {
+        width: 64px;
+        height: 64px;
+        display: block;
+        margin: 0 auto;
+        filter: var(--icon-filter);
+      }
+    }
+
+    &__title {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-semibold;
+      color: var(--color-success);
+      margin: 0 0 $spacing-sm 0;
+    }
+
+    &__message {
+      font-size: $font-size-base;
+      color: var(--color-text-secondary);
+      margin: 0 0 $spacing-lg 0;
+    }
+
+    &__stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: $spacing-md;
+      margin-top: $spacing-xl;
+    }
+
+    &__stat {
+      padding: $spacing-md;
+      background: var(--color-surface-hover);
+      border-radius: $radius-md;
+
+      &__value {
+        font-size: $font-size-xl;
+        font-weight: $font-weight-bold;
+        color: var(--color-primary);
+        margin-bottom: $spacing-xs;
+      }
+
+      &__label {
+        font-size: $font-size-xs;
+        color: var(--color-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+
+  // ============================================================================
+  // Footer
+  // ============================================================================
+
+  &__footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: $spacing-lg $spacing-xl;
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-sm;
+    z-index: 1;
+  }
+
+  &__button {
+    @include button-secondary;
+
+    &--primary {
+      @include button-primary;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ============================================================================
+// Animations
+// ============================================================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkPulse {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// ============================================================================
+// Responsive
+// ============================================================================
+
+@media (max-width: 768px) {
+  .profile-upload-modal {
+    &__overlay {
+      padding: $spacing-md;
+    }
+
+    &__dialog {
+      max-height: 95vh;
+    }
+
+    &__header,
+    &__body,
+    &__footer {
+      padding-left: $spacing-lg;
+      padding-right: $spacing-lg;
+    }
+
+    &__success__stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    &__tabs {
+      flex-direction: column;
+      border-bottom: none;
+    }
+
+    &__tab {
+      border-bottom: 1px solid var(--color-border);
+      border-left: 2px solid transparent;
+      margin-bottom: 0;
+
+      &--active {
+        border-left-color: var(--color-primary);
+        border-bottom-color: var(--color-border);
+      }
+    }
+  }
+}

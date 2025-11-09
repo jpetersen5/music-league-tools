@@ -1,0 +1,321 @@
+/**
+ * Profile Upload Progress Styles
+ *
+ * Styles for the upload progress indicator including:
+ * - Animated progress bar with shine effect
+ * - Phase stepper with icons and status
+ * - Current status display
+ * - Cancel button
+ *
+ * @module components/MusicLeague/ProfileUploadProgress
+ */
+
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// ============================================================================
+// Progress Container
+// ============================================================================
+
+.profile-upload-progress {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+  padding: $spacing-xl 0;
+
+  // ============================================================================
+  // Progress Bar
+  // ============================================================================
+
+  &__progress-bar {
+    width: 100%;
+    position: relative;
+
+    &__fill {
+      height: 8px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
+      border-radius: $radius-sm;
+      transition: width 0.3s ease;
+      position: relative;
+      overflow: hidden;
+
+      // Animated shine effect
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shine 2s infinite;
+      }
+    }
+
+    &__percentage {
+      text-align: center;
+      margin-top: $spacing-xs;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: var(--color-text-secondary);
+    }
+  }
+
+  // Background track for progress bar
+  &__progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: var(--color-surface-hover);
+    border-radius: $radius-sm;
+  }
+
+  // ============================================================================
+  // Phase Stepper
+  // ============================================================================
+
+  &__phases {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding: $spacing-lg 0;
+
+    // Connecting line
+    &::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 24px;
+      right: 24px;
+      height: 2px;
+      background: var(--color-border);
+      z-index: 0;
+    }
+  }
+
+  &__phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-xs;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+
+    &__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--phase-bg);
+      border: 2px solid var(--phase-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all $transition-fast;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+      &-img {
+        width: 20px;
+        height: 20px;
+        display: block;
+        filter: var(--icon-filter);
+      }
+    }
+
+    &__label {
+      font-size: $font-size-xs;
+      text-align: center;
+      color: var(--phase-text);
+      max-width: 80px;
+      line-height: 1.3;
+      font-weight: $font-weight-medium;
+    }
+
+    // ============================================================================
+    // Phase States
+    // ============================================================================
+
+    &--completed {
+      --phase-bg: var(--color-success);
+      --phase-border: var(--color-success);
+      --phase-text: var(--color-success);
+
+      .profile-upload-progress__phase__icon {
+        animation: checkPulse 0.4s ease;
+        color: white;
+      }
+    }
+
+    &--active {
+      --phase-bg: var(--color-primary);
+      --phase-border: var(--color-primary);
+      --phase-text: var(--color-text);
+
+      .profile-upload-progress__phase__icon {
+        animation: pulse 1.5s ease infinite;
+        color: white;
+      }
+    }
+
+    &--pending {
+      --phase-bg: var(--color-surface);
+      --phase-border: var(--color-border);
+      --phase-text: var(--color-text-secondary);
+    }
+  }
+
+  // ============================================================================
+  // Current Status
+  // ============================================================================
+
+  &__status {
+    text-align: center;
+    padding: $spacing-lg;
+    background: var(--color-surface-hover);
+    border-radius: $radius-md;
+
+    &__icon {
+      font-size: 48px;
+      margin-bottom: $spacing-sm;
+      animation: bounce 1s ease infinite;
+
+      &-img {
+        width: 48px;
+        height: 48px;
+        display: block;
+        margin: 0 auto;
+        filter: var(--icon-filter);
+      }
+    }
+
+    &__title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      margin-bottom: $spacing-xs;
+      color: var(--color-text);
+    }
+
+    &__message {
+      font-size: $font-size-sm;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+  }
+
+  // ============================================================================
+  // Cancel Button
+  // ============================================================================
+
+  &__cancel {
+    @include button-secondary;
+    margin: 0 auto;
+    display: block;
+  }
+}
+
+// ============================================================================
+// Animations
+// ============================================================================
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.2),
+      0 0 0 10px rgba(99, 102, 241, 0);
+  }
+}
+
+@keyframes checkPulse {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shine {
+  to {
+    left: 100%;
+  }
+}
+
+// ============================================================================
+// Responsive
+// ============================================================================
+
+@media (max-width: 768px) {
+  .profile-upload-progress {
+    &__phases {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: $spacing-md;
+
+      // Hide connecting line on mobile
+      &::before {
+        display: none;
+      }
+    }
+
+    &__phase {
+      flex: 0 0 calc(50% - #{$spacing-md});
+
+      &__label {
+        max-width: 100%;
+      }
+    }
+
+    &__status {
+      &__icon {
+        font-size: 40px;
+      }
+
+      &__title {
+        font-size: $font-size-base;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-upload-progress {
+    &__phase {
+      flex: 0 0 100%;
+
+      &__icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+
+      &__label {
+        font-size: $font-size-xs;
+      }
+    }
+  }
+}

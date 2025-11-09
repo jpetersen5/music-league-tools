@@ -1,0 +1,214 @@
+/**
+ * Upload Error Display Styles
+ *
+ * Styles for the error display component including:
+ * - Error summary card
+ * - File-grouped error sections
+ * - Collapsible error lists
+ * - Retry button and actions
+ *
+ * @module components/MusicLeague/UploadErrorDisplay
+ */
+
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// ============================================================================
+// Error Display Container
+// ============================================================================
+
+.upload-error-display {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+
+  // ============================================================================
+  // Summary
+  // ============================================================================
+  // Alert component handles its own styling
+
+  // ============================================================================
+  // Sections
+  // ============================================================================
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  &__section-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+    margin: 0;
+    padding-bottom: $spacing-sm;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  // ============================================================================
+  // File Groups
+  // ============================================================================
+
+  &__file-group {
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+    overflow: hidden;
+    background: var(--color-surface);
+
+    &__header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-md $spacing-lg;
+      background: var(--color-surface-hover);
+      border: none;
+      cursor: pointer;
+      transition: background $transition-fast;
+      text-align: left;
+
+      &:hover {
+        background: var(--color-surface);
+      }
+
+      &:focus {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -2px;
+      }
+
+      &__title {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        font-size: $font-size-base;
+        font-weight: $font-weight-semibold;
+        color: var(--color-text);
+
+        span:first-child {
+          font-size: $font-size-sm;
+          color: var(--color-text-secondary);
+          transition: transform $transition-fast;
+        }
+      }
+
+      &__count {
+        display: flex;
+        gap: $spacing-xs;
+      }
+
+      &__badge {
+        padding: 2px 8px;
+        border-radius: $radius-sm;
+        font-size: $font-size-xs;
+        font-weight: $font-weight-medium;
+
+        &--error {
+          background: var(--color-error-bg);
+          color: var(--color-error);
+        }
+
+        &--warning {
+          background: var(--color-warning-bg);
+          color: var(--color-warning);
+        }
+      }
+    }
+
+    &__content {
+      padding: $spacing-lg;
+      border-top: 1px solid var(--color-border);
+      animation: slideDown 0.2s ease;
+    }
+  }
+
+  // ============================================================================
+  // Actions
+  // ============================================================================
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    padding-top: $spacing-lg;
+    border-top: 1px solid var(--color-border);
+
+    &__hint {
+      font-size: $font-size-sm;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      padding: $spacing-md;
+      background: var(--color-surface-hover);
+      border-radius: $radius-md;
+      border-left: 3px solid var(--color-primary);
+
+      strong {
+        color: var(--color-text);
+        font-weight: $font-weight-semibold;
+      }
+    }
+
+    &__buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: $spacing-sm;
+    }
+
+    &__retry {
+      @include button-primary;
+    }
+  }
+}
+
+// ============================================================================
+// Animations
+// ============================================================================
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+// ============================================================================
+// Responsive
+// ============================================================================
+
+@media (max-width: 768px) {
+  .upload-error-display {
+    &__file-group {
+      &__header {
+        padding: $spacing-sm $spacing-md;
+
+        &__title {
+          font-size: $font-size-sm;
+        }
+
+        &__badge {
+          font-size: $font-size-xs;
+          padding: 1px 6px;
+        }
+      }
+
+      &__content {
+        padding: $spacing-md;
+      }
+    }
+
+    &__actions {
+      &__buttons {
+        flex-direction: column;
+        width: 100%;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
