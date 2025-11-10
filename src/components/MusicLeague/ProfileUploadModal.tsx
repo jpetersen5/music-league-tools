@@ -125,17 +125,38 @@ export function ProfileUploadModal({ isOpen, onClose, onUploadComplete }: Profil
 
   // Handle successful upload
   useEffect(() => {
-    if (uploadState.phase === UploadPhase.Complete && uploadState.result) {
+    let cancelled = false
+
+    async function handleComplete() {
+      if (uploadState.phase !== UploadPhase.Complete || !uploadState.result) return
+
       const { profileId, profileName, stats } = uploadState.result
       // Only execute once per upload using a ref
       // Check profileName exists to prevent showing toast for cancelled uploads
-      if (profileId && profileName && !successToastShownRef.current) {
-        successToastShownRef.current = true
-        toast.success(`Profile "${profileName}" created successfully!`)
-        refreshProfiles()
-        setActiveProfile(profileId)
-        onUploadComplete?.(profileId, stats)
+      if (!profileId || !profileName || successToastShownRef.current) return
+
+      successToastShownRef.current = true
+      toast.success(`Profile "${profileName}" created successfully!`)
+
+      try {
+        await refreshProfiles()
+        await setActiveProfile(profileId)
+
+        if (!cancelled) {
+          onUploadComplete?.(profileId, stats)
+        }
+      } catch (error) {
+        console.error('Post-upload refresh failed:', error)
+        if (!cancelled) {
+          toast.error('Profile created but failed to refresh. Please reload the page.')
+        }
       }
+    }
+
+    handleComplete()
+
+    return () => {
+      cancelled = true
     }
   }, [
     uploadState.phase,

@@ -1,0 +1,50 @@
+/**
+ * Shared Animation Keyframes
+ *
+ * Common animations used across modals, overlays, and interactive components.
+ * Extract duplicated animations to maintain consistency and reduce bundle size.
+ *
+ * @module styles/_animations
+ */
+
+// ============================================================================
+// Fade Animations
+// ============================================================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// ============================================================================
+// Slide Animations
+// ============================================================================
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================================================
+// Pulse Animations
+// ============================================================================
+
+@keyframes checkPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}

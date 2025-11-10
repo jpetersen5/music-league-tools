@@ -98,9 +98,6 @@ export interface UseVotesResult {
   /** Array of votes matching filters */
   votes: Vote[]
 
-  /** True while loading data from IndexedDB */
-  loading: boolean
-
   /** Error message if loading failed, null otherwise */
   error: string | null
 
@@ -325,7 +322,6 @@ export function useVotes(filters: VoteFilters = {}): UseVotesResult {
 
   // State: Store only vote keys for memory efficiency
   const [voteKeys, setVoteKeys] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [statistics, setStatistics] = useState<VoteStatistics>({
     totalVotes: 0,
@@ -358,11 +354,9 @@ export function useVotes(filters: VoteFilters = {}): UseVotesResult {
         votesWithComments: 0,
         commentPercentage: 0,
       })
-      setLoading(false)
       return
     }
 
-    setLoading(true)
     setError(null)
 
     try {
@@ -457,8 +451,6 @@ export function useVotes(filters: VoteFilters = {}): UseVotesResult {
         votesWithComments: 0,
         commentPercentage: 0,
       })
-    } finally {
-      setLoading(false)
     }
   }, [activeProfileId, filters, isAllProfiles])
 
@@ -513,7 +505,6 @@ export function useVotes(filters: VoteFilters = {}): UseVotesResult {
 
   return {
     votes,
-    loading,
     error,
     statistics,
     refetch,

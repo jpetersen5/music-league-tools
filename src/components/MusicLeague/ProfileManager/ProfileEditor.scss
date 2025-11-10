@@ -11,6 +11,7 @@
 
 @use '../../../styles/variables' as *;
 @use '../../../styles/mixins' as *;
+@use '../../../styles/animations' as *;
 
 // ============================================================================
 // Overlay
@@ -197,29 +198,5 @@
         background: var(--color-primary-hover);
       }
     }
-  }
-}
-
-// ============================================================================
-// Animations
-// ============================================================================
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

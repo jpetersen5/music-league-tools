@@ -173,9 +173,9 @@
     }
 
     &--export:hover {
-      background: rgba(16, 185, 129, 0.1);
-      border-color: rgb(16, 185, 129);
-      color: rgb(16, 185, 129);
+      background: var(--color-success-bg);
+      border-color: var(--color-success);
+      color: var(--color-success);
 
       .profile-card__action-icon {
         filter: brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(1736%)
@@ -184,9 +184,9 @@
     }
 
     &--delete:hover {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgb(239, 68, 68);
-      color: rgb(239, 68, 68);
+      background: var(--color-error-bg);
+      border-color: var(--color-error);
+      color: var(--color-error);
 
       .profile-card__action-icon {
         filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%)

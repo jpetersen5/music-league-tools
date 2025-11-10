@@ -89,22 +89,4 @@
       }
     }
   }
-
-  // ============================================================================
-  // Loading State
-  // ============================================================================
-
-  &__loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: $spacing-3xl;
-    min-height: 400px;
-
-    &-text {
-      font-size: $font-size-lg;
-      color: var(--color-text-secondary);
-      margin: 0;
-    }
-  }
 }

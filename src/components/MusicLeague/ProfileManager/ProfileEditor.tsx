@@ -22,7 +22,6 @@ export interface ProfileEditorProps {
 
 export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: ProfileEditorProps) {
   const [name, setName] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
   const toast = useToast()
 
   // Initialize form with profile data when it changes
@@ -36,7 +35,6 @@ export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: Prof
   useEffect(() => {
     if (!isOpen) {
       setName('')
-      setIsSaving(false)
     }
   }, [isOpen])
 
@@ -51,8 +49,6 @@ export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: Prof
       return
     }
 
-    setIsSaving(true)
-
     try {
       await updateProfileMetadata(profile.id, {
         name: name.trim(),
@@ -64,19 +60,15 @@ export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: Prof
     } catch (error) {
       console.error('Failed to update profile:', error)
       toast.error('Failed to update profile. Please try again.')
-    } finally {
-      setIsSaving(false)
     }
   }
 
   const handleCancel = () => {
-    if (!isSaving) {
-      onClose()
-    }
+    onClose()
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isSaving) {
+    if (e.target === e.currentTarget) {
       onClose()
     }
   }
@@ -90,12 +82,7 @@ export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: Prof
       <div className="profile-editor">
         <div className="profile-editor__header">
           <h2 className="profile-editor__title">Edit Profile</h2>
-          <button
-            className="profile-editor__close"
-            onClick={handleCancel}
-            aria-label="Close"
-            disabled={isSaving}
-          >
+          <button className="profile-editor__close" onClick={handleCancel} aria-label="Close">
             ×
           </button>
         </div>
@@ -113,7 +100,6 @@ export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: Prof
               onChange={e => setName(e.target.value)}
               placeholder="Enter profile name"
               required
-              disabled={isSaving}
               autoFocus
             />
             <p className="profile-editor__hint">
@@ -126,16 +112,11 @@ export function ProfileEditor({ profile, isOpen, onClose, onSaveComplete }: Prof
               type="button"
               className="profile-editor__button profile-editor__button--cancel"
               onClick={handleCancel}
-              disabled={isSaving}
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="profile-editor__button profile-editor__button--save"
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+            <button type="submit" className="profile-editor__button profile-editor__button--save">
+              Save Changes
             </button>
           </div>
         </form>

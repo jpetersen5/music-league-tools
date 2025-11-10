@@ -61,9 +61,6 @@ export interface UseSubmissionsResult {
   /** Array of submissions matching filters */
   submissions: Submission[]
 
-  /** True while loading data from IndexedDB */
-  loading: boolean
-
   /** Error message if loading failed, null otherwise */
   error: string | null
 
@@ -245,7 +242,6 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
 
   // State: Store only Spotify URIs for memory efficiency
   const [submissionUris, setSubmissionUris] = useState<SpotifyUri[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [totalCount, setTotalCount] = useState(0)
 
@@ -262,11 +258,9 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
     if (!activeProfileId) {
       setSubmissionUris([])
       setTotalCount(0)
-      setLoading(false)
       return
     }
 
-    setLoading(true)
     setError(null)
 
     try {
@@ -343,8 +337,6 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
       setError(errorMessage)
       setSubmissionUris([])
       setTotalCount(0)
-    } finally {
-      setLoading(false)
     }
   }, [activeProfileId, filters, isAllProfiles])
 
@@ -392,7 +384,6 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
 
   return {
     submissions,
-    loading,
     error,
     totalCount,
     refetch,

@@ -14,7 +14,6 @@ import './ProfileList.scss'
 
 export interface ProfileListProps {
   profiles: Profile[]
-  isLoading?: boolean
   onEdit: (profile: Profile) => void
   onExport: (profile: Profile) => void
   onDelete: (profile: Profile) => void
@@ -23,23 +22,11 @@ export interface ProfileListProps {
 
 export function ProfileList({
   profiles,
-  isLoading = false,
   onEdit,
   onExport,
   onDelete,
   onUploadClick,
 }: ProfileListProps) {
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="profile-list">
-        <div className="profile-list__loading">
-          <p className="profile-list__loading-text">Loading profiles...</p>
-        </div>
-      </div>
-    )
-  }
-
   // Empty state
   if (profiles.length === 0) {
     return (
