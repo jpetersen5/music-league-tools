@@ -34,6 +34,9 @@ export interface UseCompetitorsResult {
   /** Array of competitors (sorted: non-orphaned first, then orphaned, both alphabetically) */
   competitors: Competitor[]
 
+  /** True while loading data from IndexedDB */
+  loading: boolean
+
   /** Error message if loading failed, null otherwise */
   error: string | null
 
@@ -140,6 +143,7 @@ export function useCompetitors(includeOrphaned = true): UseCompetitorsResult {
 
   // State: Store only competitor IDs for memory efficiency
   const [competitorIds, setCompetitorIds] = useState<CompetitorId[]>([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Cache: Persistent Map for full competitor objects
@@ -154,9 +158,11 @@ export function useCompetitors(includeOrphaned = true): UseCompetitorsResult {
   const loadCompetitorIds = useCallback(async () => {
     if (!activeProfileId) {
       setCompetitorIds([])
+      setLoading(false)
       return
     }
 
+    setLoading(true)
     setError(null)
 
     try {
@@ -203,6 +209,8 @@ export function useCompetitors(includeOrphaned = true): UseCompetitorsResult {
 
       setError(errorMessage)
       setCompetitorIds([])
+    } finally {
+      setLoading(false)
     }
   }, [activeProfileId, includeOrphaned, isAllProfiles])
 
@@ -249,6 +257,7 @@ export function useCompetitors(includeOrphaned = true): UseCompetitorsResult {
 
   return {
     competitors,
+    loading,
     error,
     refetch,
     isAllProfiles,

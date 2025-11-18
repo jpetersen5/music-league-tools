@@ -26,6 +26,9 @@ export interface UseRoundsResult {
   /** Array of rounds (sorted by date oldest first by default) */
   rounds: Round[]
 
+  /** True while loading data from IndexedDB */
+  loading: boolean
+
   /** Error message if loading failed, null otherwise */
   error: string | null
 
@@ -149,6 +152,7 @@ export function useRounds(sortByDate = true): UseRoundsResult {
 
   // State: Store only round IDs for memory efficiency
   const [roundIds, setRoundIds] = useState<RoundId[]>([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
 
@@ -165,9 +169,11 @@ export function useRounds(sortByDate = true): UseRoundsResult {
     if (!activeProfileId) {
       setRoundIds([])
       setDateRange(null)
+      setLoading(false)
       return
     }
 
+    setLoading(true)
     setError(null)
 
     try {
@@ -217,6 +223,8 @@ export function useRounds(sortByDate = true): UseRoundsResult {
       setError(errorMessage)
       setRoundIds([])
       setDateRange(null)
+    } finally {
+      setLoading(false)
     }
   }, [activeProfileId, sortByDate, isAllProfiles])
 
@@ -262,6 +270,7 @@ export function useRounds(sortByDate = true): UseRoundsResult {
 
   return {
     rounds,
+    loading,
     error,
     dateRange,
     refetch,

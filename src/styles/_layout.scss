@@ -14,7 +14,7 @@
 // Header - fixed height
 .app-header {
   flex-shrink: 0;
-  height: 64px;
+  height: $header-height;
   @include flex-between;
   padding: 0 $spacing-lg;
   background: var(--color-surface);
@@ -31,6 +31,21 @@
   width: 100%;
   max-width: $breakpoint-wide;
   margin: 0 auto;
+  gap: $spacing-lg;
+
+  @include mobile {
+    gap: $spacing-md;
+  }
+}
+
+.app-title-link {
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: opacity $transition-fast;
+
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .app-title {
@@ -44,9 +59,31 @@
   }
 }
 
+.page-title-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0; // Allow flex item to shrink
+
+  @include mobile {
+    // Hide page title on mobile to save space
+    display: none;
+  }
+}
+
+.page-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--color-text);
+  margin: 0;
+  @include truncate;
+}
+
 .header-actions {
   @include flex-center;
   gap: $spacing-md;
+  flex-shrink: 0;
 
   @include mobile {
     gap: $spacing-sm;
