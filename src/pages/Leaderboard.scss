@@ -1,0 +1,46 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  // Account for header and content-wrapper padding to fill available space without page scroll
+  height: calc(100vh - $header-height - ($spacing-xl * 2));
+  overflow: hidden;
+
+  &__error {
+    @include message-error;
+    margin: 0;
+    flex-shrink: 0;
+
+    strong {
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &__loading {
+    @include flex-center;
+    padding: $spacing-3xl;
+    min-height: 400px;
+
+    p {
+      font-size: $font-size-lg;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+  }
+
+  &__table-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @include mobile {
+    // Use dynamic viewport height to account for mobile browser chrome
+    height: calc(100dvh - $header-height - ($spacing-lg * 2));
+    gap: $spacing-md;
+  }
+}

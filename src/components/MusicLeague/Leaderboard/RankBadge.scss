@@ -1,0 +1,27 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.rank-badge {
+  @include flex-center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  border-radius: $radius-md;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+
+  &__content {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+  }
+
+  &__medal {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  &--podium {
+    background: var(--color-primary-bg);
+    border-color: var(--color-primary);
+  }
+}

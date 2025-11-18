@@ -5,6 +5,7 @@ import { Home } from '@/pages/Home'
 import { SecretSanta } from '@/pages/SecretSanta'
 import { AlertTest } from '@/pages/AlertTest'
 import { ManageProfiles } from '@/pages/ManageProfiles'
+import { Leaderboard } from '@/pages/Leaderboard'
 import { ToastProvider } from '@/components/common/ToastProvider'
 import { ProfileUploadModal } from '@/components/MusicLeague/ProfileUploadModal'
 import { ProfileProvider } from '@/contexts/ProfileContext'
@@ -56,6 +57,14 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <ManageProfiles />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="leaderboard"
+                  element={
+                    <ErrorBoundary>
+                      <Leaderboard />
                     </ErrorBoundary>
                   }
                 />
