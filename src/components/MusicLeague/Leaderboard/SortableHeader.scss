@@ -1,0 +1,55 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background: var(--color-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+
+  &--active {
+    color: var(--color-primary);
+    background: var(--color-surface);
+  }
+
+  &__content {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+
+  &__indicator {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: opacity $transition-fast;
+
+    .sortable-header:hover &,
+    .sortable-header--active & {
+      opacity: 1;
+    }
+
+    :root[data-theme='dark'] & {
+      filter: invert(1) brightness(0.8);
+    }
+
+    .sortable-header--active & {
+      filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(118%)
+        contrast(119%);
+
+      :root[data-theme='dark'] & {
+        filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(118%)
+          contrast(119%);
+      }
+    }
+  }
+}

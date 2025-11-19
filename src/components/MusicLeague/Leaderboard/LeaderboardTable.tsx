@@ -1,6 +1,6 @@
 import { RankBadge } from './RankBadge'
-import { Tooltip } from '@/components/common/Tooltip'
-import type { LeaderboardEntry } from '@/types/leaderboard'
+import { SortableHeader } from './SortableHeader'
+import type { LeaderboardEntry, SortableColumn, SortDirection } from '@/types/leaderboard'
 import {
   formatPoints,
   formatPercentage,
@@ -11,9 +11,17 @@ import './LeaderboardTable.scss'
 
 export interface LeaderboardTableProps {
   rankings: LeaderboardEntry[]
+  sortColumn: SortableColumn
+  sortDirection: SortDirection
+  onSortChange: (column: SortableColumn) => void
 }
 
-export function LeaderboardTable({ rankings }: LeaderboardTableProps) {
+export function LeaderboardTable({
+  rankings,
+  sortColumn,
+  sortDirection,
+  onSortChange,
+}: LeaderboardTableProps) {
   if (rankings.length === 0) {
     return (
       <div className="leaderboard-table">
@@ -33,66 +41,93 @@ export function LeaderboardTable({ rankings }: LeaderboardTableProps) {
         <table className="leaderboard-table__table">
           <thead className="leaderboard-table__head">
             <tr>
-              <th scope="col" className="leaderboard-table__header leaderboard-table__header--rank">
-                Rank
-              </th>
-              <th scope="col" className="leaderboard-table__header leaderboard-table__header--name">
-                Competitor
-              </th>
-              <th
-                scope="col"
+              <SortableHeader
+                column="rank"
+                label="Rank"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
+                className="leaderboard-table__header leaderboard-table__header--rank"
+              />
+              <SortableHeader
+                column="competitorName"
+                label="Competitor"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
+                className="leaderboard-table__header leaderboard-table__header--name"
+              />
+              <SortableHeader
+                column="totalPoints"
+                label="Points"
+                tooltip="Total points earned from votes on submissions"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Total points earned from votes on submissions">Points</Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="winRate"
+                label="Win Rate"
+                tooltip="Percentage of rounds won (1st place)"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Percentage of rounds won (1st place)">Win Rate</Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="podiumRate"
+                label="Podium %"
+                tooltip="Percentage of rounds finishing in top 3"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Percentage of rounds finishing in top 3">Podium %</Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="averagePosition"
+                label="Avg Pos"
+                tooltip="Average finishing position across all rounds"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Average finishing position across all rounds">Avg Pos</Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="consistencyScore"
+                label="Consistency"
+                tooltip="Standard deviation of positions (lower = more consistent performance)"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Standard deviation of positions (lower = more consistent performance)">
-                  Consistency
-                </Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="votesReceived"
+                label="Votes Rcvd"
+                tooltip="Total number of votes received on this competitor's submissions"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Total number of votes received on this competitor's submissions">
-                  Votes Rcvd
-                </Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="avgVoteCast"
+                label="Avg Vote"
+                tooltip="Average points per vote cast by this competitor"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                <Tooltip content="Average points per vote cast by this competitor">
-                  Avg Vote
-                </Tooltip>
-              </th>
-              <th
-                scope="col"
+              />
+              <SortableHeader
+                column="roundsParticipated"
+                label="Rounds"
+                currentColumn={sortColumn}
+                currentDirection={sortDirection}
+                onSort={onSortChange}
                 className="leaderboard-table__header leaderboard-table__header--number"
-              >
-                Rounds
-              </th>
+              />
             </tr>
           </thead>
           <tbody className="leaderboard-table__body">

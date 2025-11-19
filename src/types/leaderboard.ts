@@ -30,10 +30,30 @@ export interface CompetitorFilter {
   minParticipation: number
 }
 
+export type SortableColumn =
+  | 'rank'
+  | 'competitorName'
+  | 'totalPoints'
+  | 'winRate'
+  | 'podiumRate'
+  | 'averagePosition'
+  | 'consistencyScore'
+  | 'votesReceived'
+  | 'avgVoteCast'
+  | 'roundsParticipated'
+
+export type SortDirection = 'asc' | 'desc'
+
+export interface SortConfig {
+  column: SortableColumn
+  direction: SortDirection
+}
+
 export interface LeaderboardFilters {
   metric: RankingMetric
   time: TimeFilter
   competitors: CompetitorFilter
+  sort: SortConfig
 }
 
 export const DEFAULT_LEADERBOARD_FILTERS: LeaderboardFilters = {
@@ -46,6 +66,10 @@ export const DEFAULT_LEADERBOARD_FILTERS: LeaderboardFilters = {
   competitors: {
     excludeIds: [],
     minParticipation: 1,
+  },
+  sort: {
+    column: 'rank',
+    direction: 'asc',
   },
 }
 
