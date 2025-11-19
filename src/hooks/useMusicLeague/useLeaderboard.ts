@@ -22,6 +22,19 @@ import {
 } from '@/utils/musicLeague/leaderboard/calculations'
 
 /**
+ * Filter votes to only include meaningful votes (those with positive points assigned).
+ *
+ * BUSINESS RULE: 0-point votes are excluded from counts and calculations because they
+ * represent votes that were only recorded due to having a comment, not actual point allocation.
+ * This applies to:
+ * - votesReceived count
+ * - avgVoteCast calculation
+ */
+function filterPositiveVotes(votes: Vote[]): Vote[] {
+  return votes.filter(v => v.pointsAssigned > 0)
+}
+
+/**
  * Calculate points per submitter for a round, applying business rules.
  * BUSINESS RULE 2: If submitter didn't vote, only negative votes count.
  */
@@ -220,13 +233,17 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
       const competitorSubmissionUris = new Set(
         filteredSubmissions.filter(s => s.submitterId === competitor.id).map(s => s.spotifyUri)
       )
-      const votesReceived = filteredVotes.filter(v =>
-        competitorSubmissionUris.has(v.spotifyUri)
-      ).length
 
-      // BUSINESS RULE 1: Only count positive votes for average calculation
+      // BUSINESS RULE: Only count votes with positive points assigned
+      // 0-point votes are excluded as they only exist due to having comments
+      const votesForCompetitor = filteredVotes.filter(v =>
+        competitorSubmissionUris.has(v.spotifyUri)
+      )
+      const votesReceived = filterPositiveVotes(votesForCompetitor).length
+
+      // BUSINESS RULE: Only count positive votes for average calculation
       const competitorVotes = filteredVotes.filter(v => v.voterId === competitor.id)
-      const positiveVotes = competitorVotes.filter(v => v.pointsAssigned > 0)
+      const positiveVotes = filterPositiveVotes(competitorVotes)
       const totalPointsGiven = positiveVotes.reduce((sum, vote) => sum + vote.pointsAssigned, 0)
       const avgVoteCast = positiveVotes.length > 0 ? totalPointsGiven / positiveVotes.length : 0
 
