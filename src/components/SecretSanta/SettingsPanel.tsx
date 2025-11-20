@@ -3,6 +3,9 @@ import type { GenerationSettings, SeparatorType, CycleOperator } from '@/types'
 import { validateCycleSettings } from '@/utils/secretSanta'
 import { usePopoverPosition } from '@/hooks/usePopoverPosition'
 import infoIcon from '/info.svg'
+import closeIcon from '/close.svg'
+import iconError from '/icon-error.svg'
+import iconWarning from '/icon-warning.svg'
 import './SettingsPanel.scss'
 
 interface SettingsPanelProps {
@@ -173,7 +176,7 @@ export const SettingsPanel = ({
             type="button"
             aria-label="Close settings"
           >
-            ✕
+            <img src={closeIcon} alt="" aria-hidden="true" />
           </button>
         </div>
 
@@ -273,7 +276,13 @@ export const SettingsPanel = ({
                 role={validationMessage.type === 'error' ? 'alert' : 'status'}
                 id={validationMessage.type === 'error' ? 'settings-validation-error' : undefined}
               >
-                {validationMessage.type === 'error' ? '❌' : '⚠️'} {validationMessage.text}
+                <img
+                  src={validationMessage.type === 'error' ? iconError : iconWarning}
+                  alt=""
+                  aria-hidden="true"
+                  className="settings-panel__validation-icon"
+                />
+                {validationMessage.text}
               </div>
             )}
           </div>

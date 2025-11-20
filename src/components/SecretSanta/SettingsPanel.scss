@@ -54,6 +54,15 @@
     padding: $spacing-xs;
     line-height: 1;
     transition: color $transition-fast;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 12px;
+      height: 12px;
+      filter: var(--icon-filter);
+    }
 
     &:hover {
       color: var(--color-text);
@@ -215,6 +224,15 @@
     padding: $spacing-xs $spacing-sm;
     border-radius: $radius-sm;
     border: 1px solid;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+
+    &-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
 
     &--error {
       color: var(--color-error);

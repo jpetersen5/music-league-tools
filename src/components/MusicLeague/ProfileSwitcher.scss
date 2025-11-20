@@ -65,6 +65,10 @@
     }
 
     &-arrow {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+      filter: var(--icon-filter);
       transition: transform $transition-fast;
 
       &--open {

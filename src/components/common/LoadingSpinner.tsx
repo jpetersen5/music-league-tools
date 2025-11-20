@@ -1,6 +1,6 @@
 import './LoadingSpinner.scss'
 
-interface LoadingSpinnerProps {
+export interface LoadingSpinnerProps {
   size?: 'small' | 'medium' | 'large'
   message?: string
   className?: string

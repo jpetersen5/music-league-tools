@@ -1,7 +1,7 @@
 import { Toaster } from 'react-hot-toast'
 import { ReactNode } from 'react'
 
-interface ToastProviderProps {
+export interface ToastProviderProps {
   children: ReactNode
 }
 
@@ -19,18 +19,18 @@ export function ToastProvider({ children }: ToastProviderProps) {
             border: '1px solid var(--toast-border)',
             padding: '16px',
             borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            boxShadow: 'var(--toast-shadow)',
           },
           success: {
             iconTheme: {
               primary: 'var(--color-success)',
-              secondary: '#fff',
+              secondary: 'var(--toast-icon-secondary)',
             },
           },
           error: {
             iconTheme: {
               primary: 'var(--color-error)',
-              secondary: '#fff',
+              secondary: 'var(--toast-icon-secondary)',
             },
           },
         }}

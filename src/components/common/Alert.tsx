@@ -1,4 +1,9 @@
 import type { ReactNode } from 'react'
+import iconError from '/icon-error.svg'
+import iconWarning from '/icon-warning.svg'
+import iconSuccess from '/icon-success.svg'
+import iconInfo from '/icon-info.svg'
+import closeIcon from '/close.svg'
 import './Alert.scss'
 
 export type AlertVariant = 'error' | 'warning' | 'success' | 'info'
@@ -20,11 +25,15 @@ export interface AlertProps {
   className?: string
 }
 
-const DEFAULT_ICONS: Record<AlertVariant, string> = {
-  error: '❌',
-  warning: '⚠️',
-  success: '✅',
-  info: 'ℹ️',
+const ICON_SOURCES: Record<AlertVariant, string> = {
+  error: iconError,
+  warning: iconWarning,
+  success: iconSuccess,
+  info: iconInfo,
+}
+
+function getDefaultIcon(variant: AlertVariant): ReactNode {
+  return <img src={ICON_SOURCES[variant]} alt="" className="alert__icon-img" aria-hidden="true" />
 }
 
 export function Alert({
@@ -36,7 +45,7 @@ export function Alert({
   icon,
   className = '',
 }: AlertProps) {
-  const displayIcon = icon ?? DEFAULT_ICONS[variant]
+  const displayIcon = icon ?? getDefaultIcon(variant)
 
   return (
     <div className={`alert alert--${variant} ${className}`} role="alert">
@@ -54,7 +63,7 @@ export function Alert({
           aria-label="Dismiss alert"
           type="button"
         >
-          ×
+          <img src={closeIcon} alt="" aria-hidden="true" />
         </button>
       )}
     </div>

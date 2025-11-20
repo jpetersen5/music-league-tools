@@ -1,10 +1,10 @@
-interface Tab<T extends string = string> {
+export interface Tab<T extends string = string> {
   id: T
   label: string
   count?: number
 }
 
-interface TabsProps<T extends string = string> {
+export interface TabsProps<T extends string = string> {
   tabs: Tab<T>[]
   activeTab: T
   onChange: (tabId: T) => void

@@ -1,6 +1,12 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import type { ValidationError, ValidationSeverity } from '@/types/musicLeague'
 import { Alert } from './Alert'
+import iconError from '/icon-error.svg'
+import iconWarning from '/icon-warning.svg'
+import iconInfo from '/icon-info.svg'
+import chevronDown from '/chevron-down.svg'
+import chevronRight from '/chevron-right.svg'
 import './ValidationMessage.scss'
 
 export interface ValidationMessageProps {
@@ -81,11 +87,15 @@ export function ValidationMessage({
       info: 'Information',
     }
 
-    const severityIcons = {
-      error: '❌',
-      warning: '⚠️',
-      info: 'ℹ️',
+    const severityIconSources: Record<string, string> = {
+      error: iconError,
+      warning: iconWarning,
+      info: iconInfo,
     }
+
+    const getSeverityIcon = (sev: string): ReactNode => (
+      <img src={severityIconSources[sev]} alt="" aria-hidden="true" />
+    )
 
     return (
       <div key={severity} className={`validation-section validation-section--${severity}`}>
@@ -95,12 +105,14 @@ export function ValidationMessage({
           disabled={!collapsible}
           type="button"
         >
-          <span className="validation-section__icon">{severityIcons[severity]}</span>
+          <span className="validation-section__icon">{getSeverityIcon(severity)}</span>
           <span className="validation-section__title">
             {severityLabels[severity]} ({errorList.length})
           </span>
           {collapsible && (
-            <span className="validation-section__toggle">{isExpanded ? '▼' : '▶'}</span>
+            <span className="validation-section__toggle">
+              <img src={isExpanded ? chevronDown : chevronRight} alt="" aria-hidden="true" />
+            </span>
           )}
         </button>
 

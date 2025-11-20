@@ -17,6 +17,7 @@ import usersIcon from '/users.svg'
 import checkIcon from '/check.svg'
 import uploadIcon from '/upload.svg'
 import settingsIcon from '/settings.svg'
+import chevronDown from '/chevron-down.svg'
 import './ProfileSwitcher.scss'
 
 export function ProfileSwitcher() {
@@ -96,22 +97,12 @@ export function ProfileSwitcher() {
             className="profile-switcher__button-icon"
           />
           <span className="profile-switcher__button-text">{getDisplayName()}</span>
-          <svg
+          <img
+            src={chevronDown}
+            alt=""
+            aria-hidden="true"
             className={`profile-switcher__button-arrow ${isOpen ? 'profile-switcher__button-arrow--open' : ''}`}
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M2.5 4.5L6 8L9.5 4.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          />
         </button>
 
         {isOpen && (
