@@ -13,12 +13,29 @@ import type {
 import { RankingMetric } from '@/types/leaderboard'
 import type { CompetitorId, RoundId, Vote, Submission } from '@/types/musicLeague'
 import {
+  calculateStandardDeviation,
   calculateTotalPoints,
   calculateWinRate,
   calculatePodiumRate,
   calculateAveragePosition,
   calculateConsistency,
   assignRanks,
+  calculateUniqueWinners,
+  calculateAvgPointsSpread,
+  analyzeSentiment,
+  calculateCommentStats,
+  findClosestRound,
+  calculateUniqueArtists,
+  findMostPositiveSong,
+  findMostNegativeSong,
+  findHighestScoredSong,
+  findLowestScoredSong,
+  findMostUniqueVotersSong,
+  findMostSubmittedArtist,
+  findMostPositiveCommenter,
+  findMostNegativeCommenter,
+  findMostLovedSubmitter,
+  findMostHatedSubmitter,
 } from '@/utils/musicLeague/leaderboard/calculations'
 
 /**
@@ -290,23 +307,195 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
   const statistics = useMemo((): LeaderboardStatistics => {
     const filteredRoundIds = new Set(filteredRounds?.map(r => r.id))
     const filteredVotes = votes?.filter(v => filteredRoundIds.has(v.roundId)) || []
+    const filteredSubmissions = submissions?.filter(s => filteredRoundIds.has(s.roundId)) || []
 
+    // Date range calculation
     let dateRange: { earliest: Date; latest: Date } | null = null
     if (filteredVotes.length > 0) {
       const voteDates = filteredVotes.map(v => v.createdAt.getTime())
+      const earliest = voteDates.reduce(
+        (min, date) => (date < min ? date : min),
+        voteDates[0] ?? Date.now()
+      )
+      const latest = voteDates.reduce(
+        (max, date) => (date > max ? date : max),
+        voteDates[0] ?? Date.now()
+      )
       dateRange = {
-        earliest: new Date(Math.min(...voteDates)),
-        latest: new Date(Math.max(...voteDates)),
+        earliest: new Date(earliest),
+        latest: new Date(latest),
       }
     }
 
+    // Create performancesByRound Map for competition intensity calculations
+    const performancesByRound = new Map<RoundId, RoundPerformance[]>()
+    for (const entry of unrankedEntries) {
+      for (const perf of entry.performances) {
+        const existing = performancesByRound.get(perf.roundId) || []
+        existing.push(perf)
+        performancesByRound.set(perf.roundId, existing)
+      }
+    }
+
+    // Create lookup maps for competitors and rounds
+    const competitorMap = new Map(competitors?.map(c => [c.id, c]) || [])
+    const roundMap = new Map(filteredRounds?.map(r => [r.id, { name: r.name }]) || [])
+
+    // Competition Intensity
+    const uniqueWinners = calculateUniqueWinners(unrankedEntries)
+    const closestRound = findClosestRound(performancesByRound)
+    const avgPointsSpread = calculateAvgPointsSpread(performancesByRound)
+
+    // Engagement - Comment and sentiment stats
+    const { totalComments, totalDownvotes, commentRate } = calculateCommentStats(filteredVotes)
+    const { avgSentiment, avgLabel, breakdown } = analyzeSentiment(filteredVotes)
+
+    // Unique artists
+    const uniqueArtists = calculateUniqueArtists(filteredSubmissions)
+
+    // "Most Y X" Metrics
+    const mostPositiveSong = findMostPositiveSong(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap,
+      roundMap
+    )
+    const mostNegativeSong = findMostNegativeSong(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap,
+      roundMap
+    )
+    const highestScoredSong = findHighestScoredSong(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap,
+      roundMap
+    )
+    const lowestScoredSong = findLowestScoredSong(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap,
+      roundMap
+    )
+    const mostUniqueVotersSong = findMostUniqueVotersSong(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap,
+      roundMap
+    )
+    const mostSubmittedArtist = findMostSubmittedArtist(filteredSubmissions)
+    const mostPositiveCommenter = findMostPositiveCommenter(filteredVotes, competitorMap)
+    const mostNegativeCommenter = findMostNegativeCommenter(filteredVotes, competitorMap)
+    const mostLovedSubmitter = findMostLovedSubmitter(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap
+    )
+    const mostHatedSubmitter = findMostHatedSubmitter(
+      filteredVotes,
+      filteredSubmissions,
+      competitorMap
+    )
+
+    // Submission Stats - Total unique tracks
+    const uniqueSpotifyUris = new Set(filteredSubmissions.map(s => s.spotifyUri))
+    const totalTracks = uniqueSpotifyUris.size
+
+    // Polarization calculation
+    let avgPolarization = 0
+    let mostPolarizingTrack: { title: string; artists: string; score: number } | null = null
+
+    if (filteredSubmissions.length > 0) {
+      const submissionPolarization = new Map<string, { score: number; submission: Submission }>()
+
+      // Group votes by submission
+      const votesByUri = new Map<string, number[]>()
+      for (const vote of filteredVotes) {
+        if (!vote.spotifyUri) continue
+        const existing = votesByUri.get(vote.spotifyUri) || []
+        existing.push(vote.pointsAssigned)
+        votesByUri.set(vote.spotifyUri, existing)
+      }
+
+      // Calculate polarization score (standard deviation) for each submission
+      for (const submission of filteredSubmissions) {
+        const votePoints = votesByUri.get(submission.spotifyUri)
+        if (!votePoints) continue
+
+        const stddev = calculateStandardDeviation(votePoints)
+        if (stddev > 0) {
+          submissionPolarization.set(submission.spotifyUri, {
+            score: stddev,
+            submission,
+          })
+        }
+      }
+
+      // Calculate average polarization
+      if (submissionPolarization.size > 0) {
+        const totalPolarization = Array.from(submissionPolarization.values()).reduce(
+          (sum, item) => sum + item.score,
+          0
+        )
+        avgPolarization = totalPolarization / submissionPolarization.size
+
+        // Find most polarizing track
+        const mostPolarizing = Array.from(submissionPolarization.values()).reduce((max, item) =>
+          item.score > max.score ? item : max
+        )
+        mostPolarizingTrack = {
+          title: mostPolarizing.submission.title,
+          artists: mostPolarizing.submission.artists.join(', '),
+          score: mostPolarizing.score,
+        }
+      }
+    }
+
+    // Average competitors per round
+    let avgCompetitorsPerRound = 0
+    if (performancesByRound.size > 0) {
+      const totalCompetitors = Array.from(performancesByRound.values()).reduce(
+        (sum, perfs) => sum + perfs.length,
+        0
+      )
+      avgCompetitorsPerRound = totalCompetitors / performancesByRound.size
+    }
+
     return {
+      // Primary Metrics
       totalRounds: filteredRounds?.length || 0,
       totalCompetitors: unrankedEntries.length,
       dateRange,
       totalVotes: filteredVotes.length,
+      // Secondary Metrics
+      uniqueWinners,
+      closestRound,
+      avgPointsSpread,
+      uniqueArtists,
+      totalComments,
+      avgCommentSentiment: avgSentiment,
+      avgCommentSentimentLabel: avgLabel,
+      totalDownvotes,
+      avgCompetitorsPerRound,
+      totalTracks,
+      avgPolarization,
+      mostPolarizingTrack,
+      commentRate,
+      sentimentBreakdown: breakdown,
+      // "Most Y X" Metrics
+      mostPositiveSong,
+      mostNegativeSong,
+      highestScoredSong,
+      lowestScoredSong,
+      mostUniqueVotersSong,
+      mostSubmittedArtist,
+      mostPositiveCommenter,
+      mostNegativeCommenter,
+      mostLovedSubmitter,
+      mostHatedSubmitter,
     }
-  }, [unrankedEntries, filteredRounds, votes])
+  }, [unrankedEntries, filteredRounds, votes, submissions, competitors])
 
   const error = useMemo(() => {
     const errors = [competitorsError, roundsError, votesError, submissionsError].filter(Boolean)

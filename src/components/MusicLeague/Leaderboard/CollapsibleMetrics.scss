@@ -2,28 +2,102 @@
 @use '../../../styles/mixins' as *;
 
 .collapsible-metrics {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex-shrink: 1;
 
-  &__toggle {
+  // Component-level toggle button (top-left)
+  &__component-toggle {
+    position: absolute;
+    top: $spacing-xs;
+    left: $spacing-xs;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-border-hover);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &-icon {
+      width: 16px;
+      height: 16px;
+      transition: transform $transition-base;
+
+      :root[data-theme='dark'] & {
+        filter: invert(1) brightness(0.7);
+      }
+
+      &--collapsed {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  // Scrollable wrapper for content
+  &__wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    max-height: 40vh;
+    overflow-y: auto;
+    @include custom-scrollbar;
+    padding-top: $spacing-lg;
+  }
+
+  &__primary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $spacing-lg;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+      gap: $spacing-md;
+    }
+  }
+
+  &__secondary-toggle {
+    position: absolute;
+    top: $spacing-xs;
+    left: calc(32px + $spacing-xs + $spacing-xs);
+    z-index: 10;
+    height: 32px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
-    background: transparent;
-    border: none;
+    gap: 6px;
+    padding: 0 10px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: $radius-sm;
     color: var(--color-text-secondary);
     font-size: $font-size-xs;
-    font-weight: $font-weight-normal;
+    font-weight: $font-weight-medium;
     cursor: pointer;
     transition: all $transition-fast;
-    align-self: flex-start;
+    white-space: nowrap;
 
     &:hover {
       background: var(--color-surface-hover);
       color: var(--color-text);
+      border-color: var(--color-border-hover);
     }
 
     &:focus-visible {
@@ -35,45 +109,34 @@
     }
   }
 
-  &__toggle-text {
+  &__secondary-toggle-text {
     color: inherit;
     line-height: 1;
   }
 
-  &__toggle-icon {
+  &__secondary-toggle-icon {
     width: 12px;
     height: 12px;
     transition:
       transform $transition-base,
       filter $transition-fast;
     flex-shrink: 0;
+    transform: rotate(180deg);
 
     :root[data-theme='dark'] & {
       filter: invert(1) brightness(0.7);
     }
+
+    &--expanded {
+      transform: rotate(0deg);
+    }
   }
 
-  &__content {
-    display: grid;
-    overflow: hidden;
-    margin-top: $spacing-md;
-    transition:
-      grid-template-rows $transition-base,
-      opacity $transition-base,
-      margin-top $transition-base;
-    grid-template-rows: 1fr;
-    opacity: 1;
+  &__secondary {
+    margin-top: $spacing-xs;
   }
 
-  &__inner {
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-md;
-  }
-
-  &__grid {
+  &__secondary-inner {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: $spacing-lg;
@@ -83,24 +146,14 @@
       gap: $spacing-md;
     }
   }
+}
 
-  &__description {
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-    margin: 0;
-    padding-top: $spacing-xs;
-    border-top: 1px solid var(--color-border);
-  }
-
-  &--collapsed {
-    .collapsible-metrics__content {
-      grid-template-rows: 0fr;
-      opacity: 0;
-      margin-top: 0;
-    }
-
-    .collapsible-metrics__toggle-icon {
-      transform: rotate(-90deg);
+// Respect user preference for reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-metrics {
+    &__component-toggle-icon,
+    &__secondary-toggle-icon {
+      transition: none;
     }
   }
 }

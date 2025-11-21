@@ -1,4 +1,5 @@
 export {
+  calculateStandardDeviation,
   calculateTotalPoints,
   calculateWinRate,
   calculatePodiumRate,
@@ -11,4 +12,30 @@ export {
   formatPosition,
   formatConsistency,
   formatPoints,
+  calculateUniqueWinners,
+  calculateAvgCloseness,
+  calculateAvgPointsSpread,
+  analyzeSentiment,
+  calculateCommentStats,
+  formatDuration,
+  findClosestRound,
+  calculateUniqueArtists,
+  findMostPositiveSong,
+  findMostNegativeSong,
+  findHighestScoredSong,
+  findLowestScoredSong,
+  findMostUniqueVotersSong,
+  findMostSubmittedArtist,
+  findMostPositiveCommenter,
+  findMostNegativeCommenter,
+  findMostLovedSubmitter,
+  findMostHatedSubmitter,
 } from './calculations'
+
+export {
+  formatSongStat,
+  createSongTooltip,
+  createCompetitorTooltip,
+  createArtistTooltip,
+  formatSentimentBreakdown,
+} from './formatting'

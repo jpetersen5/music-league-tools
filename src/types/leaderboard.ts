@@ -99,7 +99,32 @@ export interface LeaderboardEntry {
   performances: RoundPerformance[]
 }
 
+// Helper types for statistics
+export interface SongStat {
+  title: string
+  artists: string
+  submitter: string
+  roundName: string
+  value: number // Generic value (points, sentiment sum, voter count, etc.)
+}
+
+export interface CompetitorStat {
+  name: string
+  value: number // Generic value (sentiment, count, etc.)
+}
+
+export interface ArtistStat {
+  name: string
+  count: number
+}
+
+export interface RoundStat {
+  name: string
+  value: number // Closeness score
+}
+
 export interface LeaderboardStatistics {
+  // Primary Metrics (4 cards)
   totalRounds: number
   totalCompetitors: number
   dateRange: {
@@ -107,6 +132,37 @@ export interface LeaderboardStatistics {
     latest: Date
   } | null
   totalVotes: number
+
+  // Secondary Metrics
+  uniqueWinners: number
+  closestRound: RoundStat | null
+  avgPointsSpread: number
+  uniqueArtists: number
+
+  totalComments: number
+  avgCommentSentiment: number | null
+  avgCommentSentimentLabel: 'positive' | 'neutral' | 'negative' | null
+  totalDownvotes: number
+  avgCompetitorsPerRound: number
+
+  totalTracks: number
+  avgPolarization: number
+  mostPolarizingTrack: { title: string; artists: string; score: number } | null
+
+  commentRate: number
+  sentimentBreakdown: { positive: number; neutral: number; negative: number }
+
+  // "Most Y X" Metrics
+  mostPositiveSong: SongStat | null
+  mostNegativeSong: SongStat | null
+  highestScoredSong: SongStat | null
+  lowestScoredSong: SongStat | null
+  mostUniqueVotersSong: SongStat | null
+  mostSubmittedArtist: ArtistStat | null
+  mostPositiveCommenter: CompetitorStat | null
+  mostNegativeCommenter: CompetitorStat | null
+  mostLovedSubmitter: CompetitorStat | null
+  mostHatedSubmitter: CompetitorStat | null
 }
 
 export interface UseLeaderboardResult {
