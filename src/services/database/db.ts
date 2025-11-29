@@ -45,7 +45,7 @@ export interface MusicLeagueDB extends DBSchema {
     }
   }
   submissions: {
-    key: [string, string] // [profileId, spotifyUri]
+    key: [string, string, string] // [profileId, roundId, spotifyUri]
     value: Submission
     indexes: {
       'by-profileId': string
@@ -57,7 +57,7 @@ export interface MusicLeagueDB extends DBSchema {
     }
   }
   votes: {
-    key: [string, string, string] // [profileId, spotifyUri, voterId] - ensures one vote per person per song
+    key: [string, string, string, string] // [profileId, roundId, spotifyUri, voterId]
     value: Vote
     indexes: {
       'by-profileId': string
@@ -75,7 +75,7 @@ export interface MusicLeagueDB extends DBSchema {
 // ============================================================================
 
 const DB_NAME = 'music-league-tools'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 /**
  * Singleton database instance
@@ -95,7 +95,7 @@ let dbInstance: IDBPDatabase<MusicLeagueDB> | null = null
 export async function initDatabase(): Promise<IDBPDatabase<MusicLeagueDB>> {
   try {
     const db = await openDB<MusicLeagueDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
+      async upgrade(db, oldVersion, _, transaction) {
         // Version 1: Initial schema
         if (oldVersion < 1) {
           // Create profiles store
@@ -155,8 +155,62 @@ export async function initDatabase(): Promise<IDBPDatabase<MusicLeagueDB>> {
           }
         }
 
-        // Future versions will be handled here
-        // if (oldVersion < 2) { ... }
+        // Version 2: Update submissions key to include roundId
+        if (oldVersion < 2) {
+          if (db.objectStoreNames.contains('submissions')) {
+            // Use the existing transaction for reading
+            const oldStore = transaction.objectStore('submissions')
+            const allSubmissions = await oldStore.getAll()
+
+            // Delete old store
+            db.deleteObjectStore('submissions')
+
+            // Create new store with updated keyPath
+            const newStore = db.createObjectStore('submissions', {
+              keyPath: ['profileId', 'roundId', 'spotifyUri'],
+            })
+
+            // Re-create indexes
+            newStore.createIndex('by-profileId', 'profileId')
+            newStore.createIndex('by-submitterId', ['profileId', 'submitterId'])
+            newStore.createIndex('by-roundId', ['profileId', 'roundId'])
+            newStore.createIndex('by-spotifyUri', ['profileId', 'spotifyUri'])
+            newStore.createIndex('by-created', 'createdAt')
+            newStore.createIndex('by-profile-createdAt', ['profileId', 'createdAt'])
+
+            // Migrate data back
+            for (const submission of allSubmissions) {
+              await newStore.put(submission)
+            }
+          }
+
+          if (db.objectStoreNames.contains('votes')) {
+            // Use the existing transaction for reading
+            const oldStore = transaction.objectStore('votes')
+            const allVotes = await oldStore.getAll()
+
+            // Delete old store
+            db.deleteObjectStore('votes')
+
+            // Create new store with updated keyPath
+            const newStore = db.createObjectStore('votes', {
+              keyPath: ['profileId', 'roundId', 'spotifyUri', 'voterId'],
+            })
+
+            // Re-create indexes
+            newStore.createIndex('by-profileId', 'profileId')
+            newStore.createIndex('by-voterId', ['profileId', 'voterId'])
+            newStore.createIndex('by-spotifyUri', ['profileId', 'spotifyUri'])
+            newStore.createIndex('by-roundId', ['profileId', 'roundId'])
+            newStore.createIndex('by-created', 'createdAt')
+            newStore.createIndex('by-profile-createdAt', ['profileId', 'createdAt'])
+
+            // Migrate data back
+            for (const vote of allVotes) {
+              await newStore.put(vote)
+            }
+          }
+        }
       },
       blocked() {
         console.warn('Database upgrade blocked. Please close all other tabs with this app open.')

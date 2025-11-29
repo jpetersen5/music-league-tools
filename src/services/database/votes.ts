@@ -58,12 +58,13 @@ export async function addVotes(votes: readonly Vote[]): Promise<void> {
  */
 export async function getVote(
   profileId: ProfileId,
+  roundId: RoundId,
   spotifyUri: SpotifyUri,
   voterId: CompetitorId
 ): Promise<Vote | null> {
   try {
     const db = await getDatabase()
-    const vote = await db.get('votes', [profileId, spotifyUri, voterId])
+    const vote = await db.get('votes', [profileId, roundId, spotifyUri, voterId])
     return vote ?? null
   } catch (error) {
     throw new DatabaseError('Failed to get vote', error)

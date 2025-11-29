@@ -57,11 +57,12 @@ export async function addSubmissions(submissions: readonly Submission[]): Promis
  */
 export async function getSubmission(
   profileId: ProfileId,
+  roundId: RoundId,
   spotifyUri: SpotifyUri
 ): Promise<Submission | null> {
   try {
     const db = await getDatabase()
-    const submission = await db.get('submissions', [profileId, spotifyUri])
+    const submission = await db.get('submissions', [profileId, roundId, spotifyUri])
     return submission ?? null
   } catch (error) {
     throw new DatabaseError('Failed to get submission', error)
