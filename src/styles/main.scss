@@ -28,6 +28,11 @@
   --color-success-bg: rgba(76, 175, 80, 0.1);
   --color-shadow: rgba(0, 0, 0, 0.3);
   --icon-filter: invert(93%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(88%);
+
+  // Tooltip
+  --color-tooltip-bg: rgba(20, 20, 20, 0.5);
+  --color-tooltip-text: #ffffff;
+  --color-tooltip-border: rgba(255, 255, 255, 0.1);
 }
 
 :root[data-theme='light'] {
@@ -49,6 +54,11 @@
   --color-shadow: rgba(0, 0, 0, 0.1);
   --icon-filter: invert(6%) sepia(7%) saturate(1471%) hue-rotate(176deg) brightness(94%)
     contrast(91%);
+
+  // Tooltip
+  --color-tooltip-bg: rgba(235, 235, 235, 0.5);
+  --color-tooltip-text: #000000;
+  --color-tooltip-border: rgba(0, 0, 0, 0.1);
 }
 
 // Global reset
