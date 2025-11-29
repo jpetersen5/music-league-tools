@@ -60,6 +60,14 @@ $line-height-tight: 1.25;
 $line-height-normal: 1.5;
 $line-height-relaxed: 1.75;
 
-// Icon filters
 $icon-filter-primary: brightness(0) saturate(100%) invert(43%) sepia(96%) saturate(1893%)
   hue-rotate(223deg) brightness(99%) contrast(93%);
+
+// Shadows
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+$shadow-md:
+  0 4px 6px -1px rgb(0 0 0 / 0.1),
+  0 2px 4px -2px rgb(0 0 0 / 0.1);
+$shadow-lg:
+  0 10px 15px -3px rgb(0 0 0 / 0.1),
+  0 4px 6px -4px rgb(0 0 0 / 0.1);

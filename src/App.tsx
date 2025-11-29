@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout'
 import { Home } from '@/pages/Home'
 import { SecretSanta } from '@/pages/SecretSanta'
 import { AlertTest } from '@/pages/AlertTest'
+import { DataTableTest } from '@/pages/DataTableTest'
 import { ManageProfiles } from '@/pages/ManageProfiles'
 import { Leaderboard } from '@/pages/Leaderboard'
 import { ToastProvider } from '@/components/common/ToastProvider'
@@ -49,6 +50,14 @@ function App() {
                   element={
                     <ErrorBoundary>
                       <AlertTest />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="data-table-test"
+                  element={
+                    <ErrorBoundary>
+                      <DataTableTest />
                     </ErrorBoundary>
                   }
                 />
