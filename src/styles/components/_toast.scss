@@ -5,20 +5,20 @@
 // CSS Variables for toast styling
 :root[data-theme='light'] {
   // Toast container colors
-  --toast-bg: #ffffff;
-  --toast-text: #111827;
-  --toast-border: #e5e7eb;
+  --toast-bg: var(--color-background);
+  --toast-text: var(--color-text);
+  --toast-border: var(--color-border);
   --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --toast-icon-secondary: #ffffff;
+  --toast-icon-secondary: var(--color-background);
 }
 
 :root[data-theme='dark'] {
   // Toast container colors
-  --toast-bg: #1a1a1a;
-  --toast-text: #e8e8e8;
-  --toast-border: #2a2a2a;
+  --toast-bg: var(--color-surface);
+  --toast-text: var(--color-text);
+  --toast-border: var(--color-border);
   --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --toast-icon-secondary: #1a1a1a;
+  --toast-icon-secondary: var(--color-surface);
 }
 
 // Toast container responsive styles
@@ -47,6 +47,7 @@ div[data-rich-toast] {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -76,6 +77,7 @@ div[data-rich-toast][data-type='loading'] {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

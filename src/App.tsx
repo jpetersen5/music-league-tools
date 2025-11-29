@@ -29,8 +29,8 @@ function App() {
                       <ProfileUploadModal
                         isOpen={isOpen}
                         onClose={() => setIsOpen(false)}
-                        onUploadComplete={(profileId, stats) => {
-                          console.log('Uploaded!', profileId, stats)
+                        onUploadComplete={() => {
+                          // Upload complete
                         }}
                       />
                     </>

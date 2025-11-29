@@ -10,10 +10,10 @@ import {
 import './LeaderboardTable.scss'
 
 export interface LeaderboardTableProps {
-  rankings: LeaderboardEntry[]
-  sortColumn: SortableColumn
-  sortDirection: SortDirection
-  onSortChange: (column: SortableColumn) => void
+  readonly rankings: readonly LeaderboardEntry[]
+  readonly sortColumn: SortableColumn
+  readonly sortDirection: SortDirection
+  readonly onSortChange: (column: SortableColumn) => void
 }
 
 export function LeaderboardTable({
