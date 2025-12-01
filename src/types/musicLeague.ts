@@ -207,6 +207,8 @@ export interface Submission {
   readonly sentimentScore?: number
   /** Sentiment label derived from score (if present) */
   readonly sentimentLabel?: SentimentLabel
+  /** Rank of the submission within its round (1-based) */
+  readonly rankInRound?: number
 }
 
 /**

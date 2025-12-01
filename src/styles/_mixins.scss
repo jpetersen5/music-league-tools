@@ -44,6 +44,20 @@
   align-items: center;
 }
 
+@mixin flex-column-fill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
 // Card styling
 @mixin card {
   background: var(--color-surface);
@@ -213,4 +227,48 @@
     border-bottom-color: var(--color-primary);
     background: var(--color-background);
   }
+}
+
+// Table cell styling
+@mixin table-cell-sm {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+}
+
+@mixin table-cell-md {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+@mixin table-cell-lg {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+@mixin table-cell-xl {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+@mixin table-cell-text {
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+}
+
+@mixin table-cell-number {
+  align-items: flex-end;
+  justify-content: center;
+  text-align: right;
+  right: $spacing-sm;
+}
+
+@mixin table-cell-center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }

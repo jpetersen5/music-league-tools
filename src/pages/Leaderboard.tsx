@@ -1,7 +1,14 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
-import { LeaderboardTable } from '@/components/MusicLeague/Leaderboard/LeaderboardTable'
-import { MetricCard } from '@/components/MusicLeague/Leaderboard/MetricCard'
-import { CollapsibleMetrics } from '@/components/MusicLeague/Leaderboard/CollapsibleMetrics'
+import { useEffect, useState } from 'react'
+import {
+  LeaderboardTabs,
+  LeaderboardTabId,
+  LeagueView,
+  RoundsView,
+  SubmissionsView,
+  CompetitorsView,
+  MetricCard,
+  CollapsibleMetrics,
+} from '@/components/MusicLeague/Leaderboard'
 import { useLeaderboard } from '@/hooks/useMusicLeague/useLeaderboard'
 import { usePageHeader } from '@/hooks/usePageHeader'
 import {
@@ -12,86 +19,39 @@ import {
   createArtistTooltip,
   formatSentimentBreakdown,
 } from '@/utils/musicLeague/leaderboard'
-import {
-  DEFAULT_LEADERBOARD_FILTERS,
-  type LeaderboardFilters,
-  type SortableColumn,
-  type LeaderboardEntry,
-} from '@/types/leaderboard'
+import { DEFAULT_LEADERBOARD_FILTERS, RankingMetric } from '@/types/leaderboard'
 import './Leaderboard.scss'
 
-// Default sort directions per column (first click)
-const DEFAULT_SORT_DIRECTIONS: Record<SortableColumn, 'asc' | 'desc'> = {
-  rank: 'asc',
-  competitorName: 'asc',
-  totalPoints: 'desc',
-  winRate: 'desc',
-  podiumRate: 'desc',
-  averagePosition: 'asc',
-  consistencyScore: 'asc',
-  votesReceived: 'desc',
-  avgVoteCast: 'desc',
-  roundsParticipated: 'desc',
-}
-
 export const Leaderboard = () => {
-  const [filters, setFilters] = useState<LeaderboardFilters>(DEFAULT_LEADERBOARD_FILTERS)
-  const { rankings, statistics, isLoading, error } = useLeaderboard(filters)
+  const [activeTab, setActiveTab] = useState<LeaderboardTabId>('league')
+  const [searchQuery, setSearchQuery] = useState('')
   const { setPageTitle } = usePageHeader()
 
-  const handleSortChange = useCallback((column: SortableColumn) => {
-    setFilters(prev => {
-      const isSameColumn = prev.sort.column === column
-      // Toggle direction if same column, otherwise use smart default
-      const newDirection = isSameColumn
-        ? prev.sort.direction === 'asc'
-          ? 'desc'
-          : 'asc'
-        : DEFAULT_SORT_DIRECTIONS[column]
-
-      return {
-        ...prev,
-        sort: { column, direction: newDirection },
-      }
-    })
-  }, [])
-
-  // Sort rankings by the selected column
-  const sortedRankings = useMemo(() => {
-    if (!rankings.length) return rankings
-
-    const { column, direction } = filters.sort
-
-    return [...rankings].sort((a, b) => {
-      const aValue = a[column as keyof LeaderboardEntry]
-      const bValue = b[column as keyof LeaderboardEntry]
-
-      let comparison = 0
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        comparison = aValue.localeCompare(bValue)
-      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-        comparison = aValue - bValue
-      }
-
-      // Apply direction
-      if (direction === 'desc') {
-        comparison = -comparison
-      }
-
-      // Stable sort: use name as secondary sort
-      if (comparison === 0) {
-        return a.competitorName.localeCompare(b.competitorName)
-      }
-
-      return comparison
-    })
-  }, [rankings, filters.sort])
+  // TODO: aggregate different metrics per tab
+  const { statistics, isLoading, error } = useLeaderboard({
+    ...DEFAULT_LEADERBOARD_FILTERS,
+    metric: RankingMetric.TotalPoints,
+  })
 
   useEffect(() => {
     setPageTitle('Leaderboard')
     return () => setPageTitle(null)
   }, [setPageTitle])
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'league':
+        return <LeagueView searchQuery={searchQuery} />
+      case 'rounds':
+        return <RoundsView searchQuery={searchQuery} />
+      case 'submissions':
+        return <SubmissionsView searchQuery={searchQuery} />
+      case 'competitors':
+        return <CompetitorsView searchQuery={searchQuery} />
+      default:
+        return <LeagueView searchQuery={searchQuery} />
+    }
+  }
 
   return (
     <div className="leaderboard">
@@ -103,7 +63,7 @@ export const Leaderboard = () => {
 
       {isLoading ? (
         <div className="leaderboard__loading" role="status" aria-live="polite" aria-busy="true">
-          <p>Loading leaderboard data...</p>
+          <p>Loading data...</p>
         </div>
       ) : (
         <>
@@ -265,14 +225,13 @@ export const Leaderboard = () => {
             }
           />
 
-          <div className="leaderboard__table-container">
-            <LeaderboardTable
-              rankings={sortedRankings}
-              sortColumn={filters.sort.column}
-              sortDirection={filters.sort.direction}
-              onSortChange={handleSortChange}
-            />
-          </div>
+          <LeaderboardTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onSearch={setSearchQuery}
+          >
+            {renderContent()}
+          </LeaderboardTabs>
         </>
       )}
     </div>

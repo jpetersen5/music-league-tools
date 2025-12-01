@@ -264,10 +264,66 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
       const totalPointsGiven = positiveVotes.reduce((sum, vote) => sum + vote.pointsAssigned, 0)
       const avgVoteCast = positiveVotes.length > 0 ? totalPointsGiven / positiveVotes.length : 0
 
+      // New Metrics Calculation
+      const votesCast = filteredVotes.filter(v => v.voterId === competitor.id)
+      const nonZeroVotesCast = votesCast.filter(v => v.pointsAssigned !== 0)
+      const avgNonZeroVote =
+        nonZeroVotesCast.length > 0
+          ? nonZeroVotesCast.reduce((sum, v) => sum + v.pointsAssigned, 0) / nonZeroVotesCast.length
+          : 0
+
+      const firstPlaceCount = performances.filter((p: RoundPerformance) => p.position === 1).length
+      const podiumCount = performances.filter((p: RoundPerformance) => p.position <= 3).length
+
+      const commentsGiven = votesCast.filter(v => v.comment && v.comment.trim().length > 0).length
+      const commentsReceived = votesForCompetitor.filter(
+        v => v.comment && v.comment.trim().length > 0
+      ).length
+      const downvotesEarned = votesForCompetitor.filter(v => v.pointsAssigned < 0).length
+      const positivePoints = votesForCompetitor
+        .filter(v => v.pointsAssigned > 0)
+        .reduce((sum, v) => sum + v.pointsAssigned, 0)
+      const negativePoints = votesForCompetitor
+        .filter(v => v.pointsAssigned < 0)
+        .reduce((sum, v) => sum + v.pointsAssigned, 0)
+
+      // Sentiment Given
+      const sentimentGivenVotes = votesCast.filter(
+        v => v.sentimentScore !== undefined && v.sentimentScore !== null
+      )
+      const sentimentGivenAvg =
+        sentimentGivenVotes.length > 0
+          ? sentimentGivenVotes.reduce((sum, v) => sum + v.sentimentScore!, 0) /
+            sentimentGivenVotes.length
+          : 0
+      // Polarization Given (std dev of sentiment scores)
+      const sentimentGivenScores = sentimentGivenVotes.map(v => v.sentimentScore!)
+      const sentimentGivenPolarization = calculateStandardDeviation(sentimentGivenScores)
+
+      // Sentiment Received
+      const sentimentReceivedVotes = votesForCompetitor.filter(
+        v => v.sentimentScore !== undefined && v.sentimentScore !== null
+      )
+      const sentimentReceivedAvg =
+        sentimentReceivedVotes.length > 0
+          ? sentimentReceivedVotes.reduce((sum, v) => sum + v.sentimentScore!, 0) /
+            sentimentReceivedVotes.length
+          : 0
+      // Polarization Received
+      const sentimentReceivedScores = sentimentReceivedVotes.map(v => v.sentimentScore!)
+      const sentimentReceivedPolarization = calculateStandardDeviation(sentimentReceivedScores)
+
+      // Max/Min Points
+      const pointsReceived = performances.map((p: RoundPerformance) => p.pointsReceived)
+      const maxPoints = pointsReceived.length > 0 ? Math.max(...pointsReceived) : 0
+      const minPoints = pointsReceived.length > 0 ? Math.min(...pointsReceived) : 0
+
       const entry: Omit<LeaderboardEntry, 'rank'> = {
         competitorId: competitor.id,
         competitorName: competitor.name,
         totalPoints: calculateTotalPoints(performances),
+        positivePoints,
+        negativePoints,
         winRate: calculateWinRate(performances),
         podiumRate: calculatePodiumRate(performances),
         averagePosition: calculateAveragePosition(performances),
@@ -275,6 +331,20 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
         roundsParticipated: performances.length,
         votesReceived,
         avgVoteCast,
+        avgNonZeroVote,
+        firstPlaceCount,
+        podiumCount,
+        votesCast: votesCast.length,
+        commentsGiven,
+        commentsReceived,
+        downvotesEarned,
+        sentimentGiven: { average: sentimentGivenAvg, polarization: sentimentGivenPolarization },
+        sentimentReceived: {
+          average: sentimentReceivedAvg,
+          polarization: sentimentReceivedPolarization,
+        },
+        maxPoints,
+        minPoints,
         performances,
       }
 

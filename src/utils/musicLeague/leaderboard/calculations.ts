@@ -886,3 +886,6 @@ export function findMostHatedSubmitter(
     value: minSentiment,
   }
 }
+
+// export function calculateSubmissionRank(
+// )

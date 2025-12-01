@@ -255,11 +255,11 @@ export function DataTableTest() {
       sortable: true,
     },
     {
-      id: 'totalPoints',
-      header: 'Total Points',
-      accessor: row => row.totalPoints,
+      id: 'points',
+      header: 'Points',
+      accessor: (row: MockCompetitor) => row.totalPoints,
       sortable: true,
-      className: 'text-right',
+      defaultHidden: true,
     },
     {
       id: 'winRate',
@@ -320,7 +320,7 @@ export function DataTableTest() {
       accessor: row => row.votesReceived,
       sortable: true,
       className: 'text-right',
-      hide: true,
+      defaultHidden: true,
     },
     {
       id: 'avgVoteCast',
@@ -328,7 +328,7 @@ export function DataTableTest() {
       accessor: row => row.avgVoteCast.toFixed(1),
       sortable: true,
       className: 'text-right',
-      hide: true,
+      defaultHidden: true,
     },
     {
       id: 'roundsParticipated',

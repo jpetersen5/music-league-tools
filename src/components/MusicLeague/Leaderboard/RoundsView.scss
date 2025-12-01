@@ -1,0 +1,45 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.rounds-view {
+  @include flex-column;
+  width: 100%;
+  height: 100%;
+
+  &__name {
+    @include flex-column;
+
+    &-link {
+      font-weight: $font-weight-semibold;
+      color: var(--color-primary);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__description {
+    font-size: $font-size-xs;
+    color: var(--color-text-secondary);
+    @include truncate;
+  }
+
+  &__winner {
+    @include flex-column;
+
+    &-title {
+      font-weight: $font-weight-medium;
+      font-size: $font-size-sm;
+      font-style: italic;
+      @include truncate;
+    }
+
+    &-artist {
+      font-size: $font-size-xs;
+      color: var(--color-text-secondary);
+      @include truncate;
+    }
+  }
+}

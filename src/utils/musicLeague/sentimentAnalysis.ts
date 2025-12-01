@@ -368,6 +368,17 @@ export function findExtremes(scores: SentimentScore[]): {
   })
 }
 
+/**
+ * Get the CSS class modifier for a sentiment score
+ *
+ * @param score - The sentiment score to classify
+ * @returns 'positive', 'negative', or 'neutral'
+ */
+export function getSentimentClass(score: number | null | undefined): string {
+  if (score === null || score === undefined) return 'neutral'
+  return getSentimentLabel(score)
+}
+
 // ============================================================================
 // Type Exports
 // ============================================================================

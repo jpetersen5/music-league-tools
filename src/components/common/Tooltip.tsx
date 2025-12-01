@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import './Tooltip.scss'
 
 export interface TooltipProps {
-  readonly content: string
+  readonly content: ReactNode
   readonly children: ReactNode
   readonly className?: string
   readonly delay?: number
@@ -66,7 +66,7 @@ export function Tooltip({ content, children, className = '', delay = 100 }: Tool
     }
   }, [])
 
-  const decodedContent = content.replace(/\\n/g, '\n')
+  const decodedContent = typeof content === 'string' ? content.replace(/\\n/g, '\n') : content
 
   return (
     <>

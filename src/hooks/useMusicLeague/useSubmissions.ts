@@ -258,6 +258,14 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
   /**
    * Load submission URIs from database based on filters
    */
+  // Stabilize filters object to prevent unnecessary re-renders
+  const filtersJson = JSON.stringify(filters)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableFilters = useMemo(() => filters, [filtersJson])
+
+  /**
+   * Load submission URIs from database based on filters
+   */
   const loadSubmissionUris = useCallback(async () => {
     if (!activeProfileId) {
       setSubmissionUris([])
@@ -277,19 +285,19 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
         const allProfilesList = await getAllProfiles(false)
 
         // Use optimized queries when filters are present
-        if (filters.competitorId) {
+        if (stableFilters.competitorId) {
           // Query by competitor across all profiles
           const submissionArrays = await Promise.all(
             allProfilesList.map(profile =>
-              getSubmissionsByCompetitor(profile.id as ProfileId, filters.competitorId!)
+              getSubmissionsByCompetitor(profile.id as ProfileId, stableFilters.competitorId!)
             )
           )
           allSubmissions = submissionArrays.flat()
-        } else if (filters.roundId) {
+        } else if (stableFilters.roundId) {
           // Query by round across all profiles
           const submissionArrays = await Promise.all(
             allProfilesList.map(profile =>
-              getSubmissionsByRound(profile.id as ProfileId, filters.roundId!)
+              getSubmissionsByRound(profile.id as ProfileId, stableFilters.roundId!)
             )
           )
           allSubmissions = submissionArrays.flat()
@@ -305,10 +313,13 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
         allSubmissions = deduplicateSubmissions(allSubmissions)
       } else {
         // Single profile mode - use optimized queries
-        if (filters.competitorId) {
-          allSubmissions = await getSubmissionsByCompetitor(activeProfileId, filters.competitorId)
-        } else if (filters.roundId) {
-          allSubmissions = await getSubmissionsByRound(activeProfileId, filters.roundId)
+        if (stableFilters.competitorId) {
+          allSubmissions = await getSubmissionsByCompetitor(
+            activeProfileId,
+            stableFilters.competitorId
+          )
+        } else if (stableFilters.roundId) {
+          allSubmissions = await getSubmissionsByRound(activeProfileId, stableFilters.roundId)
         } else {
           allSubmissions = await getSubmissionsByProfile(activeProfileId)
         }
@@ -319,7 +330,7 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
 
       // Apply client-side filters (search, date range, comments, visibility)
       const filteredSubmissions = allSubmissions.filter(submission =>
-        matchesFilters(submission, filters)
+        matchesFilters(submission, stableFilters)
       )
 
       // Update cache with full objects
@@ -346,7 +357,7 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
     } finally {
       setLoading(false)
     }
-  }, [activeProfileId, filters, isAllProfiles])
+  }, [activeProfileId, stableFilters, isAllProfiles])
 
   /**
    * Load submissions when profile or filters change

@@ -1,0 +1,50 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.competitors-view {
+  @include flex-column;
+  width: 100%;
+  height: 100%;
+
+  &__name {
+    font-weight: $font-weight-semibold;
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  &__rank {
+    font-family: $font-family-mono;
+    font-weight: $font-weight-bold;
+    text-align: center;
+    width: 2rem;
+    display: inline-block;
+    color: var(--color-text-secondary);
+
+    &--1 {
+      color: var(--color-gold);
+    }
+
+    &--2 {
+      color: var(--color-silver);
+    }
+
+    &--3 {
+      color: var(--color-bronze);
+    }
+  }
+
+  &__points-total {
+    font-weight: $font-weight-bold;
+    white-space: nowrap;
+  }
+
+  &__points-val--pos {
+    font-size: $font-size-xs;
+    color: var(--color-success);
+  }
+
+  &__points-val--neg {
+    font-size: $font-size-xs;
+    color: var(--color-error);
+  }
+}

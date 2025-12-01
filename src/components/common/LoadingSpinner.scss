@@ -1,4 +1,5 @@
-@use '@/styles/variables/colors' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .loading-spinner {
   display: flex;

@@ -825,11 +825,40 @@ export function useProfileUpload() {
 
         updateProgress(UploadPhase.Inserting, 30, 'Converting submissions with sentiment...')
 
-        // Map sentiment scores to submissions
         let sentimentIndex = 0
+        updateProgress(UploadPhase.Inserting, 30, 'Converting submissions...')
+
+        const roundSubmissionsMap = new Map<string, { uri: string; points: number }[]>()
+        const submissionPointsMap = new Map<string, number>()
+
+        submissionsResult.data.forEach(subRow => {
+          const uri = createSpotifyUri(subRow['Spotify URI'])
+          const roundId = createRoundId(subRow['Round ID'])
+
+          const subVotes = votesResult.data.filter(v => v['Spotify URI'] === uri)
+          const points = subVotes.reduce((sum, v) => sum + parseInt(v['Points Assigned'], 10), 0)
+
+          submissionPointsMap.set(uri, points)
+
+          if (!roundSubmissionsMap.has(roundId)) {
+            roundSubmissionsMap.set(roundId, [])
+          }
+          roundSubmissionsMap.get(roundId)!.push({ uri, points })
+        })
+
+        const submissionRankMap = new Map<string, number>()
+        roundSubmissionsMap.forEach(subs => {
+          subs.sort((a, b) => b.points - a.points)
+
+          subs.forEach((sub, index) => {
+            submissionRankMap.set(sub.uri, index + 1)
+          })
+        })
+
         const dbSubmissions: SubmissionWithSentiment[] = submissionsResult.data.map(row => {
+          const uri = createSpotifyUri(row['Spotify URI'])
           const submission: SubmissionWithSentiment = {
-            spotifyUri: createSpotifyUri(row['Spotify URI']),
+            spotifyUri: uri,
             title: row.Title,
             album: row.Album,
             artists: row['Artist(s)'].split(',').map(a => a.trim()),
@@ -839,6 +868,7 @@ export function useProfileUpload() {
             roundId: createRoundId(row['Round ID']),
             visibleToVoters: row['Visible To Voters'] === 'Yes',
             profileId,
+            rankInRound: submissionRankMap.get(uri),
           }
 
           // Attach sentiment if comment exists

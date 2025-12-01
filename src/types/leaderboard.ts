@@ -45,7 +45,7 @@ export type SortableColumn =
 export type SortDirection = 'asc' | 'desc'
 
 export interface SortConfig {
-  column: SortableColumn
+  key: SortableColumn
   direction: SortDirection
 }
 
@@ -68,7 +68,7 @@ export const DEFAULT_LEADERBOARD_FILTERS: LeaderboardFilters = {
     minParticipation: 1,
   },
   sort: {
-    column: 'rank',
+    key: 'rank',
     direction: 'asc',
   },
 }
@@ -96,6 +96,19 @@ export interface LeaderboardEntry {
   roundsParticipated: number
   votesReceived: number
   avgVoteCast: number
+  avgNonZeroVote: number
+  firstPlaceCount: number
+  podiumCount: number
+  votesCast: number
+  commentsGiven: number
+  commentsReceived: number
+  downvotesEarned: number
+  sentimentGiven: { average: number; polarization: number }
+  sentimentReceived: { average: number; polarization: number }
+  maxPoints: number
+  minPoints: number
+  positivePoints: number
+  negativePoints: number
   performances: RoundPerformance[]
 }
 
