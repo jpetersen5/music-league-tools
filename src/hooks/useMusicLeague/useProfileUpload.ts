@@ -825,59 +825,147 @@ export function useProfileUpload() {
 
         updateProgress(UploadPhase.Inserting, 30, 'Converting submissions with sentiment...')
 
-        let sentimentIndex = 0
-        updateProgress(UploadPhase.Inserting, 30, 'Converting submissions...')
+        let sentimentCursor = 0
 
-        const roundSubmissionsMap = new Map<string, { uri: string; points: number }[]>()
-        const submissionPointsMap = new Map<string, number>()
-
-        submissionsResult.data.forEach(subRow => {
-          const uri = createSpotifyUri(subRow['Spotify URI'])
-          const roundId = createRoundId(subRow['Round ID'])
-
-          const subVotes = votesResult.data.filter(v => v['Spotify URI'] === uri)
-          const points = subVotes.reduce((sum, v) => sum + parseInt(v['Points Assigned'], 10), 0)
-
-          submissionPointsMap.set(uri, points)
-
-          if (!roundSubmissionsMap.has(roundId)) {
-            roundSubmissionsMap.set(roundId, [])
+        const submissionsWithTempSentiment = submissionsResult.data.map(row => {
+          let sentiment = undefined
+          if (row.Comment && row.Comment.trim().length > 0) {
+            if (sentimentCursor < sentimentScores.length) {
+              sentiment = sentimentScores[sentimentCursor++]
+            }
           }
-          roundSubmissionsMap.get(roundId)!.push({ uri, points })
+          return { ...row, _sentiment: sentiment }
         })
 
-        const submissionRankMap = new Map<string, number>()
-        roundSubmissionsMap.forEach(subs => {
-          subs.sort((a, b) => b.points - a.points)
-
-          subs.forEach((sub, index) => {
-            submissionRankMap.set(sub.uri, index + 1)
-          })
+        const votesWithTempSentiment = votesResult.data.map(row => {
+          let sentiment = undefined
+          if (row.Comment && row.Comment.trim().length > 0) {
+            if (sentimentCursor < sentimentScores.length) {
+              sentiment = sentimentScores[sentimentCursor++]
+            }
+          }
+          return { ...row, _sentiment: sentiment }
         })
 
-        const dbSubmissions: SubmissionWithSentiment[] = submissionsResult.data.map(row => {
+        updateProgress(UploadPhase.Inserting, 35, 'Converting submissions...')
+
+        // Create a map of who voted in each round
+        // Map<RoundId, Set<CompetitorId>>
+        const votersByRound = new Map<string, Set<string>>()
+
+        votesWithTempSentiment.forEach(voteRow => {
+          const roundId = createRoundId(voteRow['Round ID'])
+          const voterId = createCompetitorId(voteRow['Voter ID'])
+
+          if (!votersByRound.has(roundId)) {
+            votersByRound.set(roundId, new Set())
+          }
+          votersByRound.get(roundId)!.add(voterId)
+        })
+
+        // Pre-group votes by Spotify URI for faster processing
+        const votesByUri = new Map<string, typeof votesWithTempSentiment>()
+        votesWithTempSentiment.forEach(voteRow => {
+          const uri = createSpotifyUri(voteRow['Spotify URI'])
+          if (!votesByUri.has(uri)) {
+            votesByUri.set(uri, [])
+          }
+          votesByUri.get(uri)!.push(voteRow)
+        })
+
+        const dbSubmissions: SubmissionWithSentiment[] = submissionsWithTempSentiment.map(row => {
           const uri = createSpotifyUri(row['Spotify URI'])
+          const roundId = createRoundId(row['Round ID'])
+          const submitterId = createCompetitorId(row['Submitter ID'])
+
+          // Calculate points and stats
+          const votersInRound = votersByRound.get(roundId)
+          const submitterVoted = votersInRound?.has(submitterId) ?? false
+          const subVotes = votesByUri.get(uri) ?? []
+
+          let totalPoints = 0
+          for (const vote of subVotes) {
+            const points = parseInt(vote['Points Assigned'], 10)
+            if (submitterVoted) {
+              totalPoints += points
+            } else {
+              // If they didn't vote, only count negative points
+              if (points < 0) {
+                totalPoints += points
+              }
+            }
+          }
+
+          // Extended Stats Calculation
+          const positivePoints = subVotes
+            .map(v => parseInt(v['Points Assigned'], 10))
+            .filter(p => p > 0)
+            .reduce((sum, p) => sum + p, 0)
+
+          const negativePoints = subVotes
+            .map(v => parseInt(v['Points Assigned'], 10))
+            .filter(p => p < 0)
+            .reduce((sum, p) => sum + p, 0)
+
+          const uniqueVoters = new Set(
+            subVotes
+              .filter(v => parseInt(v['Points Assigned'], 10) !== 0)
+              .map(v => createCompetitorId(v['Voter ID']))
+          ).size
+
+          const comments = subVotes
+            .filter(v => v.Comment && v.Comment.trim().length > 0)
+            .map(v => ({
+              text: v.Comment,
+              sentiment: v._sentiment?.comparative || 0,
+            }))
+
+          const commentCount = comments.length
+
+          let averageSentiment = 0
+          if (comments.length > 0) {
+            const total = comments.reduce((sum, c) => sum + c.sentiment, 0)
+            averageSentiment = total / comments.length
+          }
+
+          let polarizationScore = 0
+          if (subVotes.length >= 2) {
+            const points = subVotes.map(v => parseInt(v['Points Assigned'], 10))
+            const sumPoints = points.reduce((sum, p) => sum + p, 0)
+            const avgPoints = sumPoints / points.length
+
+            const squaredDiffs = points.map(p => Math.pow(p - avgPoints, 2))
+            const variance = squaredDiffs.reduce((sum, d) => sum + d, 0) / points.length
+            const stdDev = Math.sqrt(variance)
+
+            const maxPossibleStdDev = Math.max(...points) - Math.min(...points)
+            if (maxPossibleStdDev > 0) {
+              polarizationScore = stdDev / maxPossibleStdDev
+            }
+          }
+
           const submission: SubmissionWithSentiment = {
             spotifyUri: uri,
             title: row.Title,
             album: row.Album,
             artists: row['Artist(s)'].split(',').map(a => a.trim()),
-            submitterId: createCompetitorId(row['Submitter ID']),
+            submitterId,
             createdAt: new Date(row.Created),
             comment: row.Comment,
-            roundId: createRoundId(row['Round ID']),
+            roundId,
             visibleToVoters: row['Visible To Voters'] === 'Yes',
             profileId,
-            rankInRound: submissionRankMap.get(uri),
+            totalPoints,
+            positivePoints,
+            negativePoints,
+            uniqueVoters,
+            commentCount,
+            polarizationScore,
+            averageSentiment,
           }
 
-          // Attach sentiment if comment exists
-          if (row.Comment && row.Comment.trim().length > 0) {
-            if (sentimentIndex < sentimentScores.length) {
-              submission.sentiment = sentimentScores[sentimentIndex++]
-            } else {
-              console.warn('Sentiment index out of bounds for submission - comment count mismatch')
-            }
+          if (row._sentiment) {
+            submission.sentiment = row._sentiment
           }
 
           return submission
@@ -886,7 +974,7 @@ export function useProfileUpload() {
 
         updateProgress(UploadPhase.Inserting, 40, 'Converting votes with sentiment...')
 
-        const dbVotes: VoteWithSentiment[] = votesResult.data.map(row => {
+        const dbVotes: VoteWithSentiment[] = votesWithTempSentiment.map(row => {
           const vote: VoteWithSentiment = {
             spotifyUri: createSpotifyUri(row['Spotify URI']),
             voterId: createCompetitorId(row['Voter ID']),
@@ -897,13 +985,8 @@ export function useProfileUpload() {
             profileId,
           }
 
-          // Attach sentiment if comment exists
-          if (row.Comment && row.Comment.trim().length > 0) {
-            if (sentimentIndex < sentimentScores.length) {
-              vote.sentiment = sentimentScores[sentimentIndex++]
-            } else {
-              console.warn('Sentiment index out of bounds for vote - comment count mismatch')
-            }
+          if (row._sentiment) {
+            vote.sentiment = row._sentiment
           }
 
           return vote

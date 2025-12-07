@@ -75,7 +75,7 @@ export interface MusicLeagueDB extends DBSchema {
 // ============================================================================
 
 const DB_NAME = 'music-league-tools'
-const DB_VERSION = 2
+const DB_VERSION = 4
 
 /**
  * Singleton database instance
@@ -208,6 +208,158 @@ export async function initDatabase(): Promise<IDBPDatabase<MusicLeagueDB>> {
             // Migrate data back
             for (const vote of allVotes) {
               await newStore.put(vote)
+            }
+          }
+        }
+
+        // Version 3: Replace rankInRound with totalPoints
+        if (oldVersion < 3) {
+          if (
+            db.objectStoreNames.contains('submissions') &&
+            db.objectStoreNames.contains('votes')
+          ) {
+            const tx = transaction
+            const submissionStore = tx.objectStore('submissions')
+            const voteStore = tx.objectStore('votes')
+
+            const allSubmissions = await submissionStore.getAll()
+            const allVotes = await voteStore.getAll()
+
+            const votersByRound = new Map<string, Set<string>>()
+            const votesBySubmissionKey = new Map<string, Vote[]>()
+
+            for (const vote of allVotes) {
+              // Track who voted in which round (per profile)
+              const roundKey = `${vote.profileId}:${vote.roundId}`
+              if (!votersByRound.has(roundKey)) {
+                votersByRound.set(roundKey, new Set())
+              }
+              votersByRound.get(roundKey)!.add(vote.voterId)
+
+              // Group votes
+              const submissionKey = `${vote.profileId}:${vote.roundId}:${vote.spotifyUri}`
+              if (!votesBySubmissionKey.has(submissionKey)) {
+                votesBySubmissionKey.set(submissionKey, [])
+              }
+              votesBySubmissionKey.get(submissionKey)!.push(vote)
+            }
+
+            for (const submission of allSubmissions) {
+              const roundKey = `${submission.profileId}:${submission.roundId}`
+              const submissionKey = `${submission.profileId}:${submission.roundId}:${submission.spotifyUri}`
+
+              const votersInRound = votersByRound.get(roundKey)
+              const submitterVoted = votersInRound?.has(submission.submitterId) ?? false
+
+              const votes = votesBySubmissionKey.get(submissionKey) ?? []
+
+              let totalPoints = 0
+              for (const vote of votes) {
+                if (submitterVoted) {
+                  totalPoints += vote.pointsAssigned
+                } else {
+                  // If they didn't vote, only count negative points
+                  if (vote.pointsAssigned < 0) {
+                    totalPoints += vote.pointsAssigned
+                  }
+                }
+              }
+
+              // @ts-expect-error: Migration logic
+              delete submission.rankInRound
+
+              // @ts-expect-error: Migration logic
+              submission.totalPoints = totalPoints
+
+              await submissionStore.put(submission)
+            }
+          }
+        }
+
+        // Version 4: Pre-calculate detailed submission stats
+        if (oldVersion < 4) {
+          if (
+            db.objectStoreNames.contains('submissions') &&
+            db.objectStoreNames.contains('votes')
+          ) {
+            const tx = transaction
+            const submissionStore = tx.objectStore('submissions')
+            const voteStore = tx.objectStore('votes')
+
+            const allSubmissions = await submissionStore.getAll()
+            const allVotes = await voteStore.getAll()
+
+            // Map votes by submission key
+            const votesBySubmissionKey = new Map<string, Vote[]>()
+            for (const vote of allVotes) {
+              const submissionKey = `${vote.profileId}:${vote.roundId}:${vote.spotifyUri}`
+              if (!votesBySubmissionKey.has(submissionKey)) {
+                votesBySubmissionKey.set(submissionKey, [])
+              }
+              votesBySubmissionKey.get(submissionKey)!.push(vote)
+            }
+
+            for (const submission of allSubmissions) {
+              const submissionKey = `${submission.profileId}:${submission.roundId}:${submission.spotifyUri}`
+              const votes = votesBySubmissionKey.get(submissionKey) ?? []
+
+              // Points breakdown
+              const positivePoints = votes
+                .filter(v => v.pointsAssigned > 0)
+                .reduce((sum, v) => sum + v.pointsAssigned, 0)
+
+              const negativePoints = votes
+                .filter(v => v.pointsAssigned < 0)
+                .reduce((sum, v) => sum + v.pointsAssigned, 0)
+
+              const uniqueVoters = new Set(
+                votes.filter(v => v.pointsAssigned !== 0).map(v => v.voterId)
+              ).size
+
+              // Comments & Sentiment
+              const comments = votes
+                .filter(v => v.comment && v.comment.trim().length > 0)
+                .map(v => ({ text: v.comment, sentiment: v.sentimentScore }))
+
+              const commentCount = comments.length
+
+              let averageSentiment = 0
+              if (comments.length > 0) {
+                const totalSentiment = comments.reduce((sum, c) => sum + (c.sentiment || 0), 0)
+                averageSentiment = totalSentiment / comments.length
+              }
+
+              // Polarization
+              let polarizationScore = 0
+              if (votes.length >= 2) {
+                const points = votes.map(v => v.pointsAssigned)
+                const totalPoints = points.reduce((sum, p) => sum + p, 0)
+                const avgPoints = totalPoints / points.length
+
+                const squaredDiffs = points.map(p => Math.pow(p - avgPoints, 2))
+                const variance = squaredDiffs.reduce((sum, d) => sum + d, 0) / points.length
+                const stdDev = Math.sqrt(variance)
+
+                const maxPossibleStdDev = Math.max(...points) - Math.min(...points)
+                if (maxPossibleStdDev > 0) {
+                  polarizationScore = stdDev / maxPossibleStdDev
+                }
+              }
+
+              // @ts-expect-error: Migration logic
+              submission.positivePoints = positivePoints
+              // @ts-expect-error: Migration logic
+              submission.negativePoints = negativePoints
+              // @ts-expect-error: Migration logic
+              submission.uniqueVoters = uniqueVoters
+              // @ts-expect-error: Migration logic
+              submission.commentCount = commentCount
+              // @ts-expect-error: Migration logic
+              submission.averageSentiment = averageSentiment
+              // @ts-expect-error: Migration logic
+              submission.polarizationScore = polarizationScore
+
+              await submissionStore.put(submission)
             }
           }
         }

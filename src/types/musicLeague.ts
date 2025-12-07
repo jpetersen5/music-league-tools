@@ -207,8 +207,20 @@ export interface Submission {
   readonly sentimentScore?: number
   /** Sentiment label derived from score (if present) */
   readonly sentimentLabel?: SentimentLabel
-  /** Rank of the submission within its round (1-based) */
-  readonly rankInRound?: number
+  /** Total points received (calculated considering voting status) */
+  readonly totalPoints?: number
+  /** Sum of positive points received */
+  readonly positivePoints?: number
+  /** Sum of negative points received */
+  readonly negativePoints?: number
+  /** Number of unique voters */
+  readonly uniqueVoters?: number
+  /** Number of comments received */
+  readonly commentCount?: number
+  /** Average sentiment score of comments (-1 to 1) */
+  readonly averageSentiment?: number
+  /** Polarization score (0 to 1) */
+  readonly polarizationScore?: number
 }
 
 /**

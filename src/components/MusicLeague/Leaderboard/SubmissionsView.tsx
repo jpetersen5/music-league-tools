@@ -3,17 +3,20 @@ import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
 import { useSubmissions } from '@/hooks/useMusicLeague/useSubmissions'
 import { useCompetitors } from '@/hooks/useMusicLeague/useCompetitors'
 import { useRounds } from '@/hooks/useMusicLeague/useRounds'
-import { getSubmissionStatistics, SubmissionStatistics } from '@/services/database/analytics'
 import { Submission } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
 import { Tooltip } from '@/components/common/Tooltip'
 import './SubmissionsView.scss'
 
-type SubmissionData = Submission &
-  SubmissionStatistics & {
-    submitterName: string
-    roundName: string
+type SubmissionData = Submission & {
+  submitterName: string
+  roundName: string
+  rankInRound?: number
+  sentiment: {
+    average: number
+    polarization: number
   }
+}
 
 export interface SubmissionsViewProps {
   searchQuery?: string
@@ -44,17 +47,45 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
         const competitorMap = new Map(competitors.map(c => [c.id, c.name]))
         const roundMap = new Map(rounds.map(r => [r.id, r.name]))
 
-        const enrichedSubmissions = await Promise.all(
-          submissions.map(async submission => {
-            const stats = await getSubmissionStatistics(activeProfileId, submission.spotifyUri)
-            return {
-              ...submission,
-              ...stats,
-              submitterName: competitorMap.get(submission.submitterId) || 'Unknown',
-              roundName: roundMap.get(submission.roundId) || 'Unknown',
-            }
+        // Calculate ranks
+        const submissionsByRound = new Map<string, typeof submissions>()
+        submissions.forEach(s => {
+          if (!submissionsByRound.has(s.roundId)) {
+            submissionsByRound.set(s.roundId, [])
+          }
+          submissionsByRound.get(s.roundId)!.push(s)
+        })
+
+        const rankMap = new Map<string, number>()
+        submissionsByRound.forEach(roundSubs => {
+          // Sort by points descending
+          roundSubs.sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0))
+          roundSubs.forEach((s, index) => {
+            rankMap.set(s.spotifyUri, index + 1)
           })
-        )
+        })
+
+        const enrichedSubmissions = submissions.map(submission => {
+          return {
+            ...submission,
+            positivePoints: submission.positivePoints ?? 0,
+            negativePoints: submission.negativePoints ?? 0,
+            uniqueVoters: submission.uniqueVoters ?? 0,
+            commentCount: submission.commentCount ?? 0,
+            averageSentiment: submission.averageSentiment ?? 0,
+            polarizationScore: submission.polarizationScore ?? 0,
+
+            sentiment: {
+              average: submission.averageSentiment ?? 0,
+              polarization: submission.polarizationScore ?? 0,
+            },
+
+            totalPoints: submission.totalPoints ?? 0,
+            rankInRound: rankMap.get(submission.spotifyUri),
+            submitterName: competitorMap.get(submission.submitterId) || 'Unknown',
+            roundName: roundMap.get(submission.roundId) || 'Unknown',
+          }
+        })
         setData(enrichedSubmissions)
       } catch (err) {
         console.error('Failed to load submission stats:', err)
@@ -149,8 +180,11 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
       {
         id: 'avgVote',
         header: 'Avg Vote',
-        accessor: row =>
-          row.uniqueVoters > 0 ? (row.totalPoints / row.uniqueVoters).toFixed(1) : '-',
+        accessor: row => {
+          const uniqueVoters = row.uniqueVoters || 0
+          const totalPoints = row.totalPoints || 0
+          return uniqueVoters > 0 ? (totalPoints / uniqueVoters).toFixed(1) : '-'
+        },
         sortable: true,
         className: 'submissions-view__col-avg-vote',
         tooltip: 'Average points per vote',
@@ -200,8 +234,13 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
     return [...filteredData].sort((a, b) => {
       // Handle special sort cases
       if (sortConfig.key === 'avgVote') {
-        const aAvg = a.uniqueVoters > 0 ? a.totalPoints / a.uniqueVoters : 0
-        const bAvg = b.uniqueVoters > 0 ? b.totalPoints / b.uniqueVoters : 0
+        const aVoters = a.uniqueVoters || 0
+        const bVoters = b.uniqueVoters || 0
+        const aPoints = a.totalPoints || 0
+        const bPoints = b.totalPoints || 0
+
+        const aAvg = aVoters > 0 ? aPoints / aVoters : 0
+        const bAvg = bVoters > 0 ? bPoints / bVoters : 0
         return sortConfig.direction === 'asc' ? aAvg - bAvg : bAvg - aAvg
       }
 

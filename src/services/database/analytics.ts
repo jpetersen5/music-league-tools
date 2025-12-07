@@ -9,7 +9,7 @@
 import { DatabaseError } from './db'
 import { getVotesByVoter, getVotesForSubmission } from './votes'
 import { getSubmissionsByCompetitor } from './submissions'
-import type { ProfileId, CompetitorId, SpotifyUri, RoundId } from '@/types/musicLeague'
+import type { ProfileId, CompetitorId, RoundId } from '@/types/musicLeague'
 
 // ============================================================================
 // Analytics Types
@@ -21,18 +21,6 @@ export interface CompetitorRelationship {
   totalPoints: number
   voteCount: number
   averagePoints: number
-}
-
-export interface PolarizationMetrics {
-  spotifyUri: SpotifyUri
-  totalVotes: number
-  totalPoints: number
-  averagePoints: number
-  standardDeviation: number
-  polarizationScore: number // 0-1, higher = more polarizing
-  highVoters: number // Count of votes above average
-  lowVoters: number // Count of votes below average
-  zeroVoters: number // Count of zero/downvotes
 }
 
 export interface CompetitorStats {
@@ -240,67 +228,6 @@ export async function getBiggestHater(
 }
 
 // ============================================================================
-// Polarization Analytics
-// ============================================================================
-
-/**
- * Calculate polarization metrics for a submission
- * High polarization = some loved it, some hated it
- * Low polarization = everyone gave similar scores
- *
- * @param profileId - Profile ID
- * @param spotifyUri - Spotify track URI
- * @returns Polarization metrics or null if insufficient votes
- * @throws DatabaseError if calculation fails
- */
-export async function getSubmissionPolarization(
-  profileId: ProfileId,
-  spotifyUri: SpotifyUri
-): Promise<PolarizationMetrics | null> {
-  try {
-    const votes = await getVotesForSubmission(profileId, spotifyUri)
-
-    if (votes.length < 2) {
-      // Need at least 2 votes for meaningful polarization
-      return null
-    }
-
-    const points = votes.map(v => v.pointsAssigned)
-    const totalPoints = points.reduce((sum, p) => sum + p, 0)
-    const averagePoints = totalPoints / points.length
-
-    // Calculate standard deviation
-    const squaredDiffs = points.map(p => Math.pow(p - averagePoints, 2))
-    const variance = squaredDiffs.reduce((sum, d) => sum + d, 0) / points.length
-    const standardDeviation = Math.sqrt(variance)
-
-    // Polarization score: normalized standard deviation (0-1)
-    // Higher values = more polarizing
-    const maxPossibleStdDev = Math.max(...points) - Math.min(...points)
-    const polarizationScore = maxPossibleStdDev > 0 ? standardDeviation / maxPossibleStdDev : 0
-
-    // Count distribution
-    const highVoters = points.filter(p => p > averagePoints).length
-    const lowVoters = points.filter(p => p < averagePoints && p > 0).length
-    const zeroVoters = points.filter(p => p === 0).length
-
-    return {
-      spotifyUri,
-      totalVotes: votes.length,
-      totalPoints,
-      averagePoints,
-      standardDeviation,
-      polarizationScore,
-      highVoters,
-      lowVoters,
-      zeroVoters,
-    }
-  } catch (error) {
-    throw new DatabaseError('Failed to calculate submission polarization', error)
-  }
-}
-
-// ============================================================================
 // Competitor Statistics
 // ============================================================================
 
@@ -425,7 +352,6 @@ export async function getLeagueStatistics(profileId: ProfileId): Promise<LeagueS
 
     for (const round of rounds) {
       const roundSubmissions = submissions.filter(s => s.roundId === round.id)
-      const roundVotes = votes.filter(v => v.roundId === round.id)
 
       if (roundSubmissions.length === 0) continue
 
@@ -433,33 +359,20 @@ export async function getLeagueStatistics(profileId: ProfileId): Promise<LeagueS
       roundParticipation.push(roundSubmissions.length / (totalCompetitors || 1))
 
       // Calculate points for this round
-      const submissionPoints = new Map<SpotifyUri, number>()
-      const submitterMap = new Map<SpotifyUri, CompetitorId>()
+      if (roundSubmissions.length > 0) {
+        // Use pre-calculated totalPoints
+        const scores = roundSubmissions.map(s => s.totalPoints || 0)
+        const maxPoints = Math.max(...scores)
+        const minPoints = Math.min(...scores)
 
-      roundSubmissions.forEach(s => {
-        submissionPoints.set(s.spotifyUri, 0)
-        submitterMap.set(s.spotifyUri, s.submitterId)
-      })
-
-      roundVotes.forEach(v => {
-        const current = submissionPoints.get(v.spotifyUri) || 0
-        submissionPoints.set(v.spotifyUri, current + v.pointsAssigned)
-      })
-
-      // Find winner and spread
-      const points = Array.from(submissionPoints.values()).sort((a, b) => b - a)
-      if (points.length > 0) {
-        const maxPoints = points[0]!
-        const minPoints = points[points.length - 1]!
         roundSpreads.push(maxPoints - minPoints)
 
-        // Find submitter of winning song
-        for (const [uri, p] of submissionPoints.entries()) {
-          if (p === maxPoints) {
-            const submitter = submitterMap.get(uri)
-            if (submitter) roundWinners.add(submitter)
+        // Find submitters of winning songs
+        roundSubmissions.forEach(s => {
+          if ((s.totalPoints || 0) === maxPoints) {
+            roundWinners.add(s.submitterId)
           }
-        }
+        })
       }
     }
 
@@ -555,40 +468,26 @@ export async function getRoundStatistics(
     const startDate = dates.length > 0 ? dates[0] : null
     const endDate = dates.length > 0 ? dates[dates.length - 1] : null
 
-    // Points calculation
-    const submissionPoints = new Map<SpotifyUri, number>()
-    const submissionMap = new Map<SpotifyUri, (typeof submissions)[0]>()
-
-    submissions.forEach(s => {
-      submissionPoints.set(s.spotifyUri, 0)
-      submissionMap.set(s.spotifyUri, s)
-    })
-
-    votes.forEach(v => {
-      const current = submissionPoints.get(v.spotifyUri) || 0
-      submissionPoints.set(v.spotifyUri, current + v.pointsAssigned)
-    })
-
     // Find winner and stats
     let winningSubmission: RoundStatistics['winningSubmission'] = null
     let maxPoints = -Infinity
     let minPoints = Infinity
 
-    if (submissionPoints.size > 0) {
-      const points = Array.from(submissionPoints.values())
-      maxPoints = Math.max(...points)
-      minPoints = Math.min(...points)
+    if (submissions.length > 0) {
+      // Use pre-calculated totalPoints
+      const scores = submissions.map(s => s.totalPoints || 0)
+      maxPoints = Math.max(...scores)
+      minPoints = Math.min(...scores)
 
-      for (const [uri, p] of submissionPoints.entries()) {
-        if (p === maxPoints) {
-          const s = submissionMap.get(uri)!
-          winningSubmission = {
-            title: s.title,
-            artist: s.artists[0] || 'Unknown',
-            submitterId: s.submitterId,
-            points: p,
-          }
-          break // Take first winner if tie
+      // Find winner
+      const winners = submissions.filter(s => (s.totalPoints || 0) === maxPoints)
+      if (winners.length > 0) {
+        const winner = winners[0]
+        winningSubmission = {
+          title: winner!.title,
+          artist: winner!.artists[0] || 'Unknown',
+          submitterId: winner!.submitterId,
+          points: maxPoints,
         }
       }
     } else {
@@ -645,85 +544,5 @@ export async function getRoundStatistics(
     }
   } catch (error) {
     throw new DatabaseError('Failed to get round statistics', error)
-  }
-}
-
-// ============================================================================
-// Submission Statistics
-// ============================================================================
-
-export interface SubmissionStatistics {
-  spotifyUri: SpotifyUri
-  totalPoints: number
-  positivePoints: number
-  negativePoints: number
-  uniqueVoters: number
-  commentCount: number
-  sentiment: {
-    average: number
-    polarization: number
-  }
-}
-
-/**
- * Get aggregated statistics for a specific submission
- *
- * @param profileId - Profile ID
- * @param spotifyUri - Spotify URI
- * @returns Submission statistics
- */
-export async function getSubmissionStatistics(
-  profileId: ProfileId,
-  spotifyUri: SpotifyUri
-): Promise<SubmissionStatistics> {
-  try {
-    const votes = await import('./votes').then(m => m.getVotesForSubmission(profileId, spotifyUri))
-
-    // Points
-    const totalPoints = votes.reduce((sum, v) => sum + v.pointsAssigned, 0)
-    const positivePoints = votes
-      .filter(v => v.pointsAssigned > 0)
-      .reduce((sum, v) => sum + v.pointsAssigned, 0)
-    const negativePoints = votes
-      .filter(v => v.pointsAssigned < 0)
-      .reduce((sum, v) => sum + v.pointsAssigned, 0)
-
-    // Voters
-    const uniqueVoters = new Set(votes.filter(v => v.pointsAssigned !== 0).map(v => v.voterId)).size
-
-    // Comments
-    const commentCount = votes.filter(v => v.comment && v.comment.trim().length > 0).length
-
-    // Sentiment
-    let avgSentiment = 0
-    let polarizationScore = 0
-
-    const comments = votes
-      .filter(v => v.comment && v.comment.trim().length > 0)
-      .map(v => ({ text: v.comment, sentiment: v.sentimentScore }))
-
-    if (comments.length > 0) {
-      const scores = comments.map(c => c.sentiment || 0)
-      avgSentiment = scores.reduce((sum, s) => sum + s, 0) / comments.length
-    }
-
-    // Polarization
-    const polarization = await getSubmissionPolarization(profileId, spotifyUri)
-    polarizationScore = polarization?.polarizationScore ?? 0
-
-    return {
-      spotifyUri,
-      totalPoints,
-      positivePoints,
-      negativePoints,
-      uniqueVoters,
-      commentCount,
-      sentiment: {
-        average: avgSentiment,
-        polarization: polarizationScore,
-      },
-    }
-  } catch (error) {
-    throw new DatabaseError('Failed to get submission statistics', error)
   }
 }
