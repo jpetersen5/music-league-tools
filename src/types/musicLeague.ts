@@ -141,6 +141,58 @@ export interface VoteCsvRow {
 export type AnyCsvRow = CompetitorCsvRow | RoundCsvRow | SubmissionCsvRow | VoteCsvRow
 
 // ============================================================================
+// Statistics Types (Pre-calculated)
+// ============================================================================
+
+export interface RoundStats {
+  readonly competitorCount: number
+  readonly submissionCount: number
+  readonly voteCount: number
+  readonly commentCount: number
+  readonly startDate: Date | null
+  readonly endDate: Date | null
+  readonly winningSubmission: {
+    readonly title: string
+    readonly artist: string
+    readonly submitterId: CompetitorId
+    readonly points: number
+  } | null
+  readonly maxPoints: number
+  readonly minPoints: number
+  readonly avgSentiment: number
+  readonly sentiment: {
+    readonly positive: number
+    readonly neutral: number
+    readonly negative: number
+    readonly polarization: number
+  }
+}
+
+export interface LeagueStats {
+  readonly totalRounds: number
+  readonly totalCompetitors: number
+  readonly totalSubmissions: number
+  readonly totalVotes: number
+  readonly totalComments: number
+  readonly totalDownvotes: number
+  readonly uniqueWinners: number
+  readonly uniqueArtists: number
+  readonly startDate: Date | null
+  readonly endDate: Date | null
+  readonly lengthInDays: number
+  readonly avgParticipation: number
+  readonly avgPointSpread: number
+  readonly commentRate: number
+  readonly sentiment: {
+    readonly average: number
+    readonly positivePercent: number
+    readonly neutralPercent: number
+    readonly negativePercent: number
+    readonly polarization: number
+  }
+}
+
+// ============================================================================
 // Database Entity Types (For IndexedDB Storage)
 // ============================================================================
 
@@ -176,6 +228,8 @@ export interface Round {
   readonly createdAt: Date
   /** Profile this round belongs to */
   readonly profileId: ProfileId
+  /** Pre-calculated statistics for this round (v5+) */
+  readonly stats?: RoundStats
 }
 
 /**
@@ -308,6 +362,8 @@ export interface Profile {
   readonly voteDateRange: DateRange | null
   /** Optional notes about this dataset */
   readonly notes: string
+  /** Pre-calculated statistics for this league (v5+) */
+  readonly stats?: LeagueStats
 }
 
 // ============================================================================

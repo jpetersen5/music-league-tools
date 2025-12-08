@@ -1,14 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
 import { useRounds } from '@/hooks/useMusicLeague/useRounds'
-import { getRoundStatistics, RoundStatistics } from '@/services/database/analytics'
 import { Round } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
 import { Tooltip } from '@/components/common'
 import { getSentimentClass } from '@/utils/musicLeague/sentimentAnalysis'
 import './RoundsView.scss'
-
-type RoundData = Round & RoundStatistics
 
 export interface RoundsViewProps {
   searchQuery?: string
@@ -16,8 +13,7 @@ export interface RoundsViewProps {
 
 export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
   const { activeProfileId } = useProfileContext()
-  const [data, setData] = useState<RoundData[]>([])
-  const [statsLoading, setStatsLoading] = useState(false)
+  const [data, setData] = useState<Round[]>([])
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'startDate',
@@ -27,27 +23,10 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
   const { rounds, loading: roundsLoading, error: roundsError } = useRounds(true)
 
   useEffect(() => {
-    const loadStats = async () => {
-      if (!rounds || !activeProfileId) return
-
-      try {
-        setStatsLoading(true)
-        const enrichedRounds = await Promise.all(
-          rounds.map(async round => {
-            const stats = await getRoundStatistics(activeProfileId, round.id)
-            return { ...round, ...stats }
-          })
-        )
-        setData(enrichedRounds)
-      } catch (err) {
-        console.error('Failed to load round stats:', err)
-      } finally {
-        setStatsLoading(false)
-      }
+    if (rounds) {
+      setData(rounds)
     }
-
-    loadStats()
-  }, [rounds, activeProfileId])
+  }, [rounds])
 
   const filteredData = useMemo(() => {
     if (!searchQuery) return data
@@ -59,7 +38,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
     )
   }, [data, searchQuery])
 
-  const columns: Column<RoundData>[] = useMemo(
+  const columns: Column<Round>[] = useMemo(
     () => [
       {
         id: 'name',
@@ -94,14 +73,19 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
       {
         id: 'startDate',
         header: 'Started',
-        accessor: row => (row.startDate ? row.startDate.toLocaleDateString() : '-'),
+        accessor: row =>
+          row.stats?.startDate
+            ? row.stats.startDate.toLocaleDateString()
+            : row.createdAt
+              ? row.createdAt.toLocaleDateString()
+              : '-',
         sortable: true,
         className: 'rounds-view__col-date',
       },
       {
         id: 'endDate',
         header: 'Ended',
-        accessor: row => (row.endDate ? row.endDate.toLocaleDateString() : '-'),
+        accessor: row => (row.stats?.endDate ? row.stats.endDate.toLocaleDateString() : '-'),
         sortable: true,
         className: 'rounds-view__col-end-date',
         defaultHidden: true,
@@ -110,13 +94,15 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
         id: 'winningSubmission',
         header: 'Winner',
         accessor: row =>
-          row.winningSubmission ? (
+          row.stats?.winningSubmission ? (
             <div
               className="rounds-view__winner"
-              title={`${row.winningSubmission.title} by ${row.winningSubmission.artist}`}
+              title={`${row.stats.winningSubmission.title} by ${row.stats.winningSubmission.artist}`}
             >
-              <span className="rounds-view__winner-title">{row.winningSubmission.title}</span>
-              <span className="rounds-view__winner-artist">{row.winningSubmission.artist}</span>
+              <span className="rounds-view__winner-title">{row.stats.winningSubmission.title}</span>
+              <span className="rounds-view__winner-artist">
+                {row.stats.winningSubmission.artist}
+              </span>
             </div>
           ) : (
             '-'
@@ -127,14 +113,14 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
       {
         id: 'maxPoints',
         header: 'Max Pts',
-        accessor: row => row.maxPoints,
+        accessor: row => row.stats?.maxPoints ?? '-',
         sortable: true,
         className: 'rounds-view__number',
       },
       {
         id: 'minPoints',
         header: 'Min Pts',
-        accessor: row => row.minPoints,
+        accessor: row => row.stats?.minPoints ?? '-',
         sortable: true,
         className: 'rounds-view__number',
         defaultHidden: true,
@@ -142,7 +128,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
       {
         id: 'commentCount',
         header: 'Comments',
-        accessor: row => row.commentCount,
+        accessor: row => row.stats?.commentCount ?? '-',
         sortable: true,
         className: 'rounds-view__number',
       },
@@ -151,9 +137,9 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
         header: 'Avg Sent.',
         accessor: row => (
           <span
-            className={`rounds-view__sentiment rounds-view__sentiment--${getSentimentClass(row.avgSentiment)}`}
+            className={`rounds-view__sentiment rounds-view__sentiment--${getSentimentClass(row.stats?.avgSentiment ?? 0)}`}
           >
-            {row.avgSentiment.toFixed(2)}
+            {row.stats?.avgSentiment?.toFixed(2) ?? '-'}
           </span>
         ),
         sortable: true,
@@ -162,7 +148,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
       {
         id: 'competitorCount',
         header: 'Competitors',
-        accessor: row => row.competitorCount,
+        accessor: row => row.stats?.competitorCount ?? '-',
         sortable: true,
         className: 'rounds-view__number',
       },
@@ -179,8 +165,15 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
 
   const sortedData = useMemo(() => {
     return [...filteredData].sort((a, b) => {
-      const aValue = a[sortConfig.key as keyof RoundData]
-      const bValue = b[sortConfig.key as keyof RoundData]
+      // Helper to safely get value from row or stats
+      const getValue = (item: Round, key: string) => {
+        if (key in item) return item[key as keyof Round]
+        if (item.stats && key in item.stats) return item.stats[key as keyof typeof item.stats]
+        return undefined
+      }
+
+      const aValue = getValue(a, sortConfig.key)
+      const bValue = getValue(b, sortConfig.key)
 
       if (aValue === undefined || aValue === null) return 1
       if (bValue === undefined || bValue === null) return -1
@@ -212,7 +205,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
         onSort={handleSort}
         rowKey={row => row.id}
         emptyMessage="No rounds found."
-        loading={roundsLoading || statsLoading}
+        loading={roundsLoading}
         className="flex-1"
       />
     </div>

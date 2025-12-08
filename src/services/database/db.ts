@@ -8,7 +8,22 @@
  */
 
 import { openDB, type IDBPDatabase, type DBSchema } from 'idb'
-import type { Profile, Competitor, Round, Submission, Vote } from '@/types/musicLeague'
+
+import type {
+  Profile,
+  Competitor,
+  Round,
+  Submission,
+  Vote,
+  RoundStats,
+  LeagueStats,
+  RoundId,
+} from '@/types/musicLeague'
+import {
+  calculateStandardDeviation,
+  calculateAvgPointsSpread,
+  calculateUniqueArtists,
+} from '@/utils/musicLeague/leaderboard/calculations'
 
 // ============================================================================
 // Database Schema Definition
@@ -75,7 +90,7 @@ export interface MusicLeagueDB extends DBSchema {
 // ============================================================================
 
 const DB_NAME = 'music-league-tools'
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 /**
  * Singleton database instance
@@ -360,6 +375,255 @@ export async function initDatabase(): Promise<IDBPDatabase<MusicLeagueDB>> {
               submission.polarizationScore = polarizationScore
 
               await submissionStore.put(submission)
+            }
+          }
+        }
+
+        // Version 5: Pre-calculate Round and League stats
+        if (oldVersion < 5) {
+          if (
+            db.objectStoreNames.contains('rounds') &&
+            db.objectStoreNames.contains('profiles') &&
+            db.objectStoreNames.contains('submissions') &&
+            db.objectStoreNames.contains('votes') &&
+            db.objectStoreNames.contains('competitors')
+          ) {
+            const tx = transaction
+            const roundStore = tx.objectStore('rounds')
+            const profileStore = tx.objectStore('profiles')
+            const submissionStore = tx.objectStore('submissions')
+            const voteStore = tx.objectStore('votes')
+            const competitorStore = tx.objectStore('competitors')
+
+            const allRounds = await roundStore.getAll()
+            const allProfiles = await profileStore.getAll()
+            const allSubmissions = await submissionStore.getAll()
+            const allVotes = await voteStore.getAll()
+            const allCompetitors = await competitorStore.getAll()
+
+            // Map data for O(1) access
+            const submissionsByRound = new Map<string, Submission[]>()
+            const votesByRound = new Map<string, Vote[]>()
+            const submissionsByProfile = new Map<string, Submission[]>()
+            const votesByProfile = new Map<string, Vote[]>()
+            const roundsByProfile = new Map<string, Round[]>()
+            const competitorsByProfile = new Map<string, Competitor[]>()
+
+            for (const sub of allSubmissions) {
+              // By Round
+              const rKey = sub.roundId
+              if (!submissionsByRound.has(rKey)) submissionsByRound.set(rKey, [])
+              submissionsByRound.get(rKey)!.push(sub)
+
+              // By Profile
+              const pKey = sub.profileId
+              if (!submissionsByProfile.has(pKey)) submissionsByProfile.set(pKey, [])
+              submissionsByProfile.get(pKey)!.push(sub)
+            }
+
+            for (const vote of allVotes) {
+              const rKey = vote.roundId
+              if (!votesByRound.has(rKey)) votesByRound.set(rKey, [])
+              votesByRound.get(rKey)!.push(vote)
+
+              const pKey = vote.profileId
+              if (!votesByProfile.has(pKey)) votesByProfile.set(pKey, [])
+              votesByProfile.get(pKey)!.push(vote)
+            }
+
+            for (const round of allRounds) {
+              const pKey = round.profileId
+              if (!roundsByProfile.has(pKey)) roundsByProfile.set(pKey, [])
+              roundsByProfile.get(pKey)!.push(round)
+            }
+
+            for (const comp of allCompetitors) {
+              const pKey = comp.profileId
+              if (!competitorsByProfile.has(pKey)) competitorsByProfile.set(pKey, [])
+              competitorsByProfile.get(pKey)!.push(comp)
+            }
+
+            // 1. Update Rounds with Stats
+            for (const round of allRounds) {
+              const roundSubmissions = submissionsByRound.get(round.id) || []
+              const roundVotes = votesByRound.get(round.id) || []
+
+              // Basic counts
+              const competitorCount = new Set(roundSubmissions.map(s => s.submitterId)).size
+              const submissionCount = roundSubmissions.length
+              const voteCount = roundVotes.length
+              const comments = roundVotes.filter(v => v.comment && v.comment.trim().length > 0)
+              const commentCount = comments.length
+
+              // Dates
+              const dates = [
+                ...roundSubmissions.map(s => s.createdAt),
+                ...roundVotes.map(v => v.createdAt),
+              ].sort((a, b) => a.getTime() - b.getTime())
+
+              const startDate = dates.length > 0 ? dates[0] : null
+              const endDate = dates.length > 0 ? dates[dates.length - 1] : null
+
+              // Points & Winner
+              let maxPoints = -Infinity
+              let minPoints = Infinity
+              let winningSubmission: RoundStats['winningSubmission'] = null
+
+              if (roundSubmissions.length > 0) {
+                const scores = roundSubmissions.map(s => s.totalPoints || 0)
+                maxPoints = scores.length > 0 ? Math.max(...scores) : 0
+                minPoints = scores.length > 0 ? Math.min(...scores) : 0
+
+                const winners = roundSubmissions.filter(s => (s.totalPoints || 0) === maxPoints)
+                if (winners.length > 0) {
+                  const winner = winners[0]
+                  winningSubmission = {
+                    title: winner!.title,
+                    artist: winner!.artists[0] || 'Unknown',
+                    submitterId: winner!.submitterId,
+                    points: maxPoints,
+                  }
+                }
+              } else {
+                maxPoints = 0
+                minPoints = 0
+              }
+
+              // Sentiment
+              let avgSentiment = 0
+              const sentimentCounts = {
+                positive: 0,
+                neutral: 0,
+                negative: 0,
+                polarization: 0,
+              }
+
+              if (commentCount > 0) {
+                const scores = comments.map(v => v.sentimentScore || 0)
+                const totalScore = scores.reduce((sum, s) => sum + s, 0)
+                avgSentiment = totalScore / commentCount
+
+                sentimentCounts.positive = scores.filter(s => s > 0.05).length
+                sentimentCounts.neutral = scores.filter(s => s >= -0.05 && s <= 0.05).length
+                sentimentCounts.negative = scores.filter(s => s < -0.05).length
+                sentimentCounts.polarization = calculateStandardDeviation(scores)
+              }
+
+              const stats: RoundStats = {
+                competitorCount,
+                submissionCount,
+                voteCount,
+                commentCount,
+                startDate: startDate ?? null,
+                endDate: endDate ?? null,
+                winningSubmission,
+                maxPoints,
+                minPoints,
+                avgSentiment,
+                sentiment: sentimentCounts,
+              }
+
+              // @ts-expect-error: Migration logic
+              round.stats = stats
+              await roundStore.put(round)
+            }
+
+            // 2. Update Profiles with Stats
+            for (const profile of allProfiles) {
+              const pRounds = roundsByProfile.get(profile.id) || []
+              const pSubmissions = submissionsByProfile.get(profile.id) || []
+              const pVotes = votesByProfile.get(profile.id) || []
+              const pCompetitors = competitorsByProfile.get(profile.id) || []
+
+              const lengthInDays =
+                profile.roundDateRange?.earliest && profile.roundDateRange?.latest
+                  ? Math.ceil(
+                      (profile.roundDateRange.latest.getTime() -
+                        profile.roundDateRange.earliest.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )
+                  : 0
+
+              // Participation
+              const roundParticipation: number[] = []
+              const performancesByRound = new Map<RoundId, { pointsReceived: number }[]>()
+
+              for (const round of pRounds) {
+                const rSubs = pSubmissions.filter(s => s.roundId === round.id)
+                if (rSubs.length === 0) continue
+                roundParticipation.push(rSubs.length / (pCompetitors.length || 1))
+
+                const perfs = rSubs.map(s => ({ pointsReceived: s.totalPoints || 0 }))
+                performancesByRound.set(round.id, perfs)
+              }
+
+              const avgParticipation =
+                roundParticipation.length > 0
+                  ? roundParticipation.reduce((a, b) => a + b, 0) / roundParticipation.length
+                  : 0
+
+              const avgPointSpread = calculateAvgPointsSpread(performancesByRound)
+
+              // Unique Winners calculation
+              const uniqueWinners = new Set<string>()
+              for (const round of pRounds) {
+                const updatedRound = allRounds.find(r => r.id === round.id)
+                if (updatedRound && updatedRound.stats?.winningSubmission) {
+                  uniqueWinners.add(updatedRound.stats.winningSubmission.submitterId)
+                }
+              }
+
+              // Comments
+              const totalComments = pVotes.filter(
+                v => v.comment && v.comment.trim().length > 0
+              ).length
+              const totalDownvotes = pVotes.filter(v => v.pointsAssigned < 0).length
+              const commentRate = pVotes.length > 0 ? totalComments / pVotes.length : 0
+
+              // Sentiment
+              const comments = pVotes.filter(v => v.comment && v.comment.trim().length > 0)
+              const sentScores = comments.map(c => c.sentimentScore || 0)
+              let avgSent = 0
+              let pol = 0
+              let posPct = 0
+              let neuPct = 0
+              let negPct = 0
+
+              if (comments.length > 0) {
+                avgSent = sentScores.reduce((a, b) => a + b, 0) / comments.length
+                pol = calculateStandardDeviation(sentScores)
+                posPct = sentScores.filter(s => s > 0.05).length / comments.length
+                neuPct = sentScores.filter(s => s >= -0.05 && s <= 0.05).length / comments.length
+                negPct = sentScores.filter(s => s < -0.05).length / comments.length
+              }
+
+              const stats: LeagueStats = {
+                totalRounds: pRounds.length,
+                totalCompetitors: pCompetitors.length,
+                totalSubmissions: pSubmissions.length,
+                totalVotes: pVotes.length,
+                totalComments,
+                totalDownvotes,
+                uniqueWinners: uniqueWinners.size,
+                uniqueArtists: calculateUniqueArtists(pSubmissions),
+                startDate: profile.roundDateRange?.earliest ?? null,
+                endDate: profile.roundDateRange?.latest ?? null,
+                lengthInDays,
+                avgParticipation,
+                avgPointSpread,
+                commentRate,
+                sentiment: {
+                  average: avgSent,
+                  polarization: pol,
+                  positivePercent: posPct,
+                  neutralPercent: neuPct,
+                  negativePercent: negPct,
+                },
+              }
+
+              // @ts-expect-error: Migration logic
+              profile.stats = stats
+              await profileStore.put(profile)
             }
           }
         }

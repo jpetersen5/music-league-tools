@@ -6,9 +6,63 @@ import type {
   ArtistStat,
   RoundStat,
 } from '@/types/leaderboard'
-import type { Vote, RoundId, Submission, Competitor } from '@/types/musicLeague'
+import type { Vote, RoundId, Submission, Competitor, CompetitorId } from '@/types/musicLeague'
 
 const PODIUM_THRESHOLD = 3
+
+// ============================================================================
+// Core Business Logic
+// ============================================================================
+
+/**
+ * Determines if a vote should be counted towards points/ranking.
+ *
+ * BUSINESS RULE: 0-point votes are excluded from counts and average calculations
+ * because they represent votes that were only recorded due to having a comment,
+ * not actual point allocation.
+ *
+ * @param vote - The vote to check
+ * @returns True if the vote has effectively allocated points (positive)
+ */
+export function isPositiveVote(vote: Vote): boolean {
+  return vote.pointsAssigned > 0
+}
+
+/**
+ * Calculates total points for a submission based on votes received.
+ *
+ * BUSINESS RULE: If the submitter did NOT vote in the round, they are penalized
+ * by only receiving negative points (if any). Positive points are forfeited.
+ *
+ * @param votes - All votes for the round
+ * @param submission - The submission to calculate points for
+ * @param votersInRound - Set of competitor IDs who voted in this round
+ * @returns Total calculated points
+ */
+export function calculateSubmissionPoints(
+  votes: Vote[],
+  submission: Submission,
+  votersInRound: Set<CompetitorId>
+): number {
+  const submitterVoted = votersInRound.has(submission.submitterId)
+  let totalPoints = 0
+
+  for (const vote of votes) {
+    if (vote.spotifyUri !== submission.spotifyUri) continue
+
+    if (submitterVoted) {
+      // Normal case: everything counts
+      totalPoints += vote.pointsAssigned
+    } else {
+      // Penalty case: only negative points count
+      if (vote.pointsAssigned < 0) {
+        totalPoints += vote.pointsAssigned
+      }
+    }
+  }
+
+  return totalPoints
+}
 
 /**
  * Calculates the standard deviation of a set of numbers.
@@ -202,7 +256,7 @@ export function calculateAvgCloseness(
  * @returns Average points spread across all rounds, or 0 if no rounds
  */
 export function calculateAvgPointsSpread(
-  performancesByRound: Map<RoundId, RoundPerformance[]>
+  performancesByRound: Map<RoundId, { pointsReceived: number }[]>
 ): number {
   if (performancesByRound.size === 0) return 0
 
@@ -886,6 +940,3 @@ export function findMostHatedSubmitter(
     value: minSentiment,
   }
 }
-
-// export function calculateSubmissionRank(
-// )

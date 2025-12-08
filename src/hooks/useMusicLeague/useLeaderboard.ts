@@ -36,34 +36,14 @@ import {
   findMostNegativeCommenter,
   findMostLovedSubmitter,
   findMostHatedSubmitter,
+  isPositiveVote,
+  calculateSubmissionPoints,
 } from '@/utils/musicLeague/leaderboard/calculations'
 
-/**
- * Filter votes to only include meaningful votes (those with positive points assigned).
- *
- * BUSINESS RULE: 0-point votes are excluded from counts and calculations because they
- * represent votes that were only recorded due to having a comment, not actual point allocation.
- * This applies to:
- * - votesReceived count
- * - avgVoteCast calculation
- */
-function filterPositiveVotes(votes: Vote[]): Vote[] {
-  return votes.filter(v => v.pointsAssigned > 0)
-}
-
-/**
- * Calculate points per submitter for a round, applying business rules.
- * BUSINESS RULE 2: If submitter didn't vote, only negative votes count.
- */
 function calculateRoundPoints(
   roundVotes: Vote[],
   roundSubmissions: Submission[]
 ): Map<CompetitorId, number> {
-  const uriToSubmitter = new Map<string, CompetitorId>()
-  for (const submission of roundSubmissions) {
-    uriToSubmitter.set(submission.spotifyUri, submission.submitterId)
-  }
-
   const votersInRound = new Set<CompetitorId>()
   for (const vote of roundVotes) {
     votersInRound.add(vote.voterId)
@@ -71,20 +51,12 @@ function calculateRoundPoints(
 
   const submissionPoints = new Map<CompetitorId, number>()
 
-  for (const vote of roundVotes) {
-    if (!vote.spotifyUri || vote.pointsAssigned == null) continue
-
-    const submitterId = uriToSubmitter.get(vote.spotifyUri)
-    if (!submitterId) continue
-
-    // BUSINESS RULE 2: Non-voters only receive negative votes
-    const submitterVoted = votersInRound.has(submitterId)
-    if (!submitterVoted && vote.pointsAssigned >= 0) {
-      continue
+  for (const submission of roundSubmissions) {
+    const points = calculateSubmissionPoints(roundVotes, submission, votersInRound)
+    if (points !== 0) {
+      const current = submissionPoints.get(submission.submitterId) || 0
+      submissionPoints.set(submission.submitterId, current + points)
     }
-
-    const current = submissionPoints.get(submitterId) || 0
-    submissionPoints.set(submitterId, current + vote.pointsAssigned)
   }
 
   return submissionPoints
@@ -256,11 +228,11 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
       const votesForCompetitor = filteredVotes.filter(v =>
         competitorSubmissionUris.has(v.spotifyUri)
       )
-      const votesReceived = filterPositiveVotes(votesForCompetitor).length
+      const votesReceived = votesForCompetitor.filter(isPositiveVote).length
 
       // BUSINESS RULE: Only count positive votes for average calculation
       const competitorVotes = filteredVotes.filter(v => v.voterId === competitor.id)
-      const positiveVotes = filterPositiveVotes(competitorVotes)
+      const positiveVotes = competitorVotes.filter(isPositiveVote)
       const totalPointsGiven = positiveVotes.reduce((sum, vote) => sum + vote.pointsAssigned, 0)
       const avgVoteCast = positiveVotes.length > 0 ? totalPointsGiven / positiveVotes.length : 0
 
@@ -281,7 +253,7 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
       ).length
       const downvotesEarned = votesForCompetitor.filter(v => v.pointsAssigned < 0).length
       const positivePoints = votesForCompetitor
-        .filter(v => v.pointsAssigned > 0)
+        .filter(isPositiveVote)
         .reduce((sum, v) => sum + v.pointsAssigned, 0)
       const negativePoints = votesForCompetitor
         .filter(v => v.pointsAssigned < 0)

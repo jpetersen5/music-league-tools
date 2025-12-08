@@ -1,17 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
 import { getAllProfiles } from '@/services/database/profiles'
-import { getLeagueStatistics, LeagueStatistics } from '@/services/database/analytics'
 import { Profile } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
 import { formatDuration } from '@/utils/musicLeague/leaderboard'
 import { getSentimentClass } from '@/utils/musicLeague/sentimentAnalysis'
 import './LeagueView.scss'
-
-type LeagueData = Profile &
-  LeagueStatistics & {
-    dateRange: { earliest: Date; latest: Date } | null
-  }
 
 export interface LeagueViewProps {
   searchQuery?: string
@@ -19,7 +13,7 @@ export interface LeagueViewProps {
 
 export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
   const { activeProfileId, setActiveProfile } = useProfileContext()
-  const [data, setData] = useState<LeagueData[]>([])
+  const [data, setData] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,54 +27,7 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       try {
         setLoading(true)
         const profiles = await getAllProfiles(true)
-
-        const enrichedProfiles = await Promise.all(
-          profiles.map(async profile => {
-            try {
-              const stats = await getLeagueStatistics(profile.id)
-              return {
-                ...profile,
-                ...stats,
-                dateRange:
-                  stats.startDate && stats.endDate
-                    ? {
-                        earliest: stats.startDate,
-                        latest: stats.endDate,
-                      }
-                    : null,
-              }
-            } catch (e) {
-              console.error(`Failed to load stats for profile ${profile.id}`, e)
-              return {
-                ...profile,
-                totalRounds: 0,
-                totalCompetitors: 0,
-                totalSubmissions: 0,
-                totalVotes: 0,
-                totalComments: 0,
-                totalDownvotes: 0,
-                uniqueWinners: 0,
-                uniqueArtists: 0,
-                avgParticipation: 0,
-                avgPointSpread: 0,
-                commentRate: 0,
-                sentiment: {
-                  average: 0,
-                  polarization: 0,
-                  positivePercent: 0,
-                  neutralPercent: 0,
-                  negativePercent: 0,
-                },
-                startDate: null,
-                endDate: null,
-                lengthInDays: 0,
-                dateRange: null,
-              } as LeagueData
-            }
-          })
-        )
-
-        setData(enrichedProfiles)
+        setData(profiles)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load leagues')
       } finally {
@@ -97,7 +44,7 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
     return data.filter(item => item.name.toLowerCase().includes(lowerQuery))
   }, [data, searchQuery])
 
-  const columns: Column<LeagueData>[] = useMemo(
+  const columns: Column<Profile>[] = useMemo(
     () => [
       {
         id: 'name',
@@ -130,21 +77,21 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       {
         id: 'totalRounds',
         header: 'Rounds',
-        accessor: row => row.totalRounds,
+        accessor: row => row.stats?.totalRounds ?? row.roundCount,
         sortable: true,
         className: 'league-view__number',
       },
       {
         id: 'totalCompetitors',
         header: 'Competitors',
-        accessor: row => row.totalCompetitors,
+        accessor: row => row.stats?.totalCompetitors ?? row.competitors.total,
         sortable: true,
         className: 'league-view__number',
       },
       {
         id: 'uniqueWinners',
         header: 'Winners',
-        accessor: row => row.uniqueWinners,
+        accessor: row => row.stats?.uniqueWinners ?? '-',
         sortable: true,
         className: 'league-view__number',
         tooltip: 'Number of unique winners',
@@ -154,7 +101,7 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
         id: 'avgParticipation',
         header: 'Avg Partic.',
         accessor: row =>
-          row.totalRounds > 0 ? (row.totalSubmissions / row.totalRounds).toFixed(1) : '0.0',
+          row.stats?.avgParticipation ? (row.stats.avgParticipation * 100).toFixed(1) + '%' : '-',
         sortable: true,
         className: 'league-view__number',
         tooltip: 'Average submissions per round',
@@ -163,14 +110,14 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       {
         id: 'startDate',
         header: 'Started',
-        accessor: row => (row.dateRange ? row.dateRange.earliest.toLocaleDateString() : '-'),
+        accessor: row => (row.stats?.startDate ? row.stats.startDate.toLocaleDateString() : '-'),
         sortable: true,
         className: 'league-view__col-date',
       },
       {
         id: 'endDate',
         header: 'Ended',
-        accessor: row => (row.dateRange ? row.dateRange.latest.toLocaleDateString() : '-'),
+        accessor: row => (row.stats?.endDate ? row.stats.endDate.toLocaleDateString() : '-'),
         sortable: true,
         className: 'league-view__col-date',
         defaultHidden: true,
@@ -178,28 +125,31 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       {
         id: 'lengthInDays',
         header: 'Length',
-        accessor: row => formatDuration(row.dateRange),
+        accessor: row =>
+          row.stats?.startDate && row.stats?.endDate
+            ? formatDuration({ earliest: row.stats.startDate, latest: row.stats.endDate })
+            : '-',
         sortable: true,
         className: 'league-view__col-duration',
       },
       {
         id: 'totalSubmissions',
         header: 'Submissions',
-        accessor: row => row.totalSubmissions,
+        accessor: row => row.stats?.totalSubmissions ?? row.submissionCount,
         sortable: true,
         className: 'league-view__number',
       },
       {
         id: 'totalVotes',
         header: 'Votes',
-        accessor: row => row.totalVotes,
+        accessor: row => row.stats?.totalVotes ?? row.voteCount,
         sortable: true,
         className: 'league-view__number',
       },
       {
         id: 'totalComments',
         header: 'Comments',
-        accessor: row => row.totalComments,
+        accessor: row => row.stats?.totalComments ?? '-',
         sortable: true,
         className: 'league-view__number',
         defaultHidden: true,
@@ -207,7 +157,8 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       {
         id: 'commentRate',
         header: 'Cmnt Rate',
-        accessor: row => `${(row.commentRate * 100).toFixed(1)}%`,
+        accessor: row =>
+          row.stats?.commentRate ? `${(row.stats.commentRate * 100).toFixed(1)}%` : '-',
         sortable: true,
         className: 'league-view__number',
         tooltip: 'Comment rate',
@@ -215,7 +166,7 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       {
         id: 'totalDownvotes',
         header: 'Downvotes',
-        accessor: row => row.totalDownvotes,
+        accessor: row => row.stats?.totalDownvotes ?? '-',
         sortable: true,
         className: 'league-view__number',
         defaultHidden: true,
@@ -225,9 +176,11 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
         header: 'Avg Sent.',
         accessor: row => (
           <span
-            className={`league-view__metric league-view__metric--${getSentimentClass(row.sentiment.average)}`}
+            className={`league-view__metric league-view__metric--${getSentimentClass(
+              row.stats?.sentiment?.average ?? 0
+            )}`}
           >
-            {row.sentiment.average.toFixed(2)}
+            {row.stats?.sentiment?.average?.toFixed(2) ?? '-'}
           </span>
         ),
         sortable: true,
@@ -266,21 +219,26 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
 
   const sortedData = useMemo(() => {
     return [...filteredData].sort((a, b) => {
-      type ComparableValue = string | number | Date | null | undefined
+      // Helper to safely get value from row or stats
+      const getValue = (item: Profile, key: string) => {
+        if (key in item) return item[key as keyof Profile]
+        if (item.stats && key in item.stats) return item.stats[key as keyof typeof item.stats]
+        return undefined
+      }
 
-      let aValue: ComparableValue = a[sortConfig.key as keyof LeagueData] as ComparableValue
-      let bValue: ComparableValue = b[sortConfig.key as keyof LeagueData] as ComparableValue
+      let aValue = getValue(a, sortConfig.key) as string | number | Date | null | undefined
+      let bValue = getValue(b, sortConfig.key) as string | number | Date | null | undefined
 
       // Handle special sort cases
       if (sortConfig.key === 'startDate') {
-        aValue = a.dateRange?.earliest
-        bValue = b.dateRange?.earliest
+        aValue = a.stats?.startDate
+        bValue = b.stats?.startDate
       } else if (sortConfig.key === 'endDate') {
-        aValue = a.dateRange?.latest
-        bValue = b.dateRange?.latest
+        aValue = a.stats?.endDate
+        bValue = b.stats?.endDate
       } else if (sortConfig.key === 'lengthInDays') {
-        aValue = a.lengthInDays
-        bValue = b.lengthInDays
+        aValue = a.stats?.lengthInDays
+        bValue = b.stats?.lengthInDays
       }
 
       if (aValue === undefined || aValue === null) return 1

@@ -61,6 +61,7 @@ import {
   validateZipContents,
 } from '@/utils/musicLeague/profileImportExport'
 import { getDatabase } from '@/services/database/db'
+import { calculateRoundStats, calculateLeagueStats } from '@/utils/musicLeague/leaderboard/stats'
 
 // ============================================================================
 // Type Utilities
@@ -993,18 +994,31 @@ export function useProfileUpload() {
         })
         stats.votesAdded = dbVotes.length
 
-        // Calculate date ranges
-        const roundDates = dbRounds.map(r => r.createdAt)
+        // Calculate Round Stats & Update Round Objects
+        const enrichedRounds = dbRounds.map(round => {
+          const roundSubmissions = dbSubmissions.filter(s => s.roundId === round.id)
+          const roundVotes = dbVotes.filter(v => v.roundId === round.id)
+
+          const stats = calculateRoundStats(roundSubmissions, roundVotes)
+          return { ...round, stats }
+        })
+
+        // Calculate League Stats
+        const leagueStats = calculateLeagueStats(
+          enrichedRounds,
+          dbSubmissions,
+          dbVotes,
+          allCompetitors
+        )
+
+        // Calculate date ranges (using league stats for accuracy)
+        const roundDateRange =
+          leagueStats.startDate && leagueStats.endDate
+            ? { earliest: leagueStats.startDate, latest: leagueStats.endDate }
+            : null
+
         const submissionDates = dbSubmissions.map(s => s.createdAt)
         const voteDates = dbVotes.map(v => v.createdAt)
-
-        const roundDateRange =
-          roundDates.length > 0
-            ? {
-                earliest: new Date(Math.min(...roundDates.map(d => d.getTime()))),
-                latest: new Date(Math.max(...roundDates.map(d => d.getTime()))),
-              }
-            : null
 
         const submissionDateRange =
           submissionDates.length > 0
@@ -1034,13 +1048,14 @@ export function useProfileUpload() {
             active: regularCompetitors.length,
             orphaned: orphanedCompetitors.length,
           },
-          roundCount: dbRounds.length,
+          roundCount: enrichedRounds.length,
           submissionCount: dbSubmissions.length,
           voteCount: dbVotes.length,
           roundDateRange,
           submissionDateRange,
           voteDateRange,
           notes: '',
+          stats: leagueStats,
         }
 
         updateProgress(UploadPhase.Inserting, 50, 'Inserting data into database...')
@@ -1075,9 +1090,10 @@ export function useProfileUpload() {
           }
 
           // Insert rounds
+          // Insert rounds
           const roundStore = tx.objectStore('rounds')
-          await Promise.all(dbRounds.map(round => roundStore.add(round)))
-          updateProgress(UploadPhase.Inserting, 80, `Inserted ${dbRounds.length} rounds`)
+          await Promise.all(enrichedRounds.map(round => roundStore.add(round)))
+          updateProgress(UploadPhase.Inserting, 80, `Inserted ${enrichedRounds.length} rounds`)
 
           // Check for cancellation after rounds insert
           if (signal.aborted) {
