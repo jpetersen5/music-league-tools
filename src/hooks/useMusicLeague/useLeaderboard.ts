@@ -13,7 +13,6 @@ import type {
 import { RankingMetric } from '@/types/leaderboard'
 import type { CompetitorId, RoundId, Vote, Submission } from '@/types/musicLeague'
 import {
-  calculateStandardDeviation,
   calculateTotalPoints,
   calculateWinRate,
   calculatePodiumRate,
@@ -38,6 +37,7 @@ import {
   findMostHatedSubmitter,
   isPositiveVote,
   calculateSubmissionPoints,
+  calculateStandardDeviation,
 } from '@/utils/musicLeague/leaderboard/calculations'
 
 function calculateRoundPoints(
