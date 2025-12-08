@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
-import { DataTable, Column, SortConfig } from '../common/DataTable'
+import { useMemo } from 'react'
+import { useTableSort } from '@/hooks/common/useTableSort'
+import { DataTable, Column } from '@/components/common/DataTable'
 
 // Mock data based on user provided CSVs
 interface MockCompetitor {
@@ -235,11 +236,6 @@ const MOCK_COMPETITORS: MockCompetitor[] = [
 ]
 
 export function DataTableTest() {
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'totalPoints',
-    direction: 'desc',
-  })
-
   const columns: Column<MockCompetitor>[] = [
     {
       id: 'rank',
@@ -348,23 +344,10 @@ export function DataTableTest() {
       }))
   }, [])
 
-  const handleSort = (key: string) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
-  }
-
-  const sortedData = useMemo(() => {
-    return [...rankedData].sort((a, b) => {
-      const aValue = a[sortConfig.key as keyof typeof a]
-      const bValue = b[sortConfig.key as keyof typeof b]
-
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [rankedData, sortConfig])
+  const { sortedData, sortConfig, handleSort } = useTableSort({
+    data: rankedData,
+    initialSort: { key: 'totalPoints', direction: 'desc' },
+  })
 
   const columnsWithRank = columns.map(col => {
     if (col.id === 'rank') {

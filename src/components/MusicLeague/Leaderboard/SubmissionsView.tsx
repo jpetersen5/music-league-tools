@@ -1,5 +1,6 @@
-import { useMemo, useState, useEffect, useCallback } from 'react'
-import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
+import { useMemo, useState, useEffect } from 'react'
+import { useTableSort } from '@/hooks/common/useTableSort'
+import { DataTable, Column } from '@/components/common/DataTable'
 import { useSubmissions } from '@/hooks/useMusicLeague/useSubmissions'
 import { useCompetitors } from '@/hooks/useMusicLeague/useCompetitors'
 import { useRounds } from '@/hooks/useMusicLeague/useRounds'
@@ -26,11 +27,6 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
   const { activeProfileId } = useProfileContext()
   const [data, setData] = useState<SubmissionData[]>([])
   const [statsLoading, setStatsLoading] = useState(false)
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'createdAt',
-    direction: 'desc',
-  })
 
   const { submissions, loading: submissionsLoading, error: submissionsError } = useSubmissions({})
   const { competitors } = useCompetitors()
@@ -223,45 +219,34 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
     []
   )
 
-  const handleSort = useCallback((key: string) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
-  }, [])
-
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
-      // Handle special sort cases
-      if (sortConfig.key === 'avgVote') {
-        const aVoters = a.uniqueVoters || 0
-        const bVoters = b.uniqueVoters || 0
-        const aPoints = a.totalPoints || 0
-        const bPoints = b.totalPoints || 0
-
-        const aAvg = aVoters > 0 ? aPoints / aVoters : 0
-        const bAvg = bVoters > 0 ? bPoints / bVoters : 0
-        return sortConfig.direction === 'asc' ? aAvg - bAvg : bAvg - aAvg
+  const { sortedData, sortConfig, handleSort } = useTableSort({
+    data: filteredData,
+    initialSort: { key: 'createdAt', direction: 'desc' },
+    getSortValue: (item, key) => {
+      // Map column IDs to data properties
+      switch (key) {
+        case 'rank':
+          return item.rankInRound
+        case 'track':
+          return item.title
+        case 'round':
+          return item.roundName
+        case 'submitter':
+          return item.submitterName
+        case 'points':
+          return item.totalPoints
+        case 'avgVote': {
+          const voters = item.uniqueVoters || 0
+          const points = item.totalPoints || 0
+          return voters > 0 ? points / voters : 0
+        }
+        case 'avgSentiment':
+          return item.sentiment.average || 0
+        default:
+          return item[key as keyof SubmissionData] as string | number | Date | null | undefined
       }
-
-      if (sortConfig.key === 'avgSentiment') {
-        const aSent = a.sentiment.average || 0
-        const bSent = b.sentiment.average || 0
-        return sortConfig.direction === 'asc' ? aSent - bSent : bSent - aSent
-      }
-
-      // Default sort
-      const aValue = a[sortConfig.key as keyof SubmissionData]
-      const bValue = b[sortConfig.key as keyof SubmissionData]
-
-      if (aValue === undefined || aValue === null) return 1
-      if (bValue === undefined || bValue === null) return -1
-
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredData, sortConfig])
+    },
+  })
 
   if (submissionsError) {
     return <div className="p-8 text-center text-error">Error: {submissionsError}</div>

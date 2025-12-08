@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
-import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
+import { useTableSort } from '@/hooks/common/useTableSort'
+import { DataTable, Column } from '@/components/common/DataTable'
 import { getAllProfiles } from '@/services/database/profiles'
 import { Profile } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
@@ -16,11 +17,6 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
   const [data, setData] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'updatedAt',
-    direction: 'desc',
-  })
 
   useEffect(() => {
     const loadData = async () => {
@@ -210,45 +206,31 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
     [activeProfileId, setActiveProfile]
   )
 
-  const handleSort = (key: string) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
-  }
-
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
+  const { sortedData, sortConfig, handleSort } = useTableSort({
+    data: filteredData,
+    initialSort: { key: 'updatedAt', direction: 'desc' },
+    getSortValue: (item, key) => {
       // Helper to safely get value from row or stats
-      const getValue = (item: Profile, key: string) => {
-        if (key in item) return item[key as keyof Profile]
-        if (item.stats && key in item.stats) return item.stats[key as keyof typeof item.stats]
+      const getValue = (target: Profile, targetKey: string) => {
+        if (targetKey in target) return target[targetKey as keyof Profile]
+        if (target.stats && targetKey in target.stats)
+          return target.stats[targetKey as keyof typeof target.stats]
         return undefined
       }
 
-      let aValue = getValue(a, sortConfig.key) as string | number | Date | null | undefined
-      let bValue = getValue(b, sortConfig.key) as string | number | Date | null | undefined
-
       // Handle special sort cases
-      if (sortConfig.key === 'startDate') {
-        aValue = a.stats?.startDate
-        bValue = b.stats?.startDate
-      } else if (sortConfig.key === 'endDate') {
-        aValue = a.stats?.endDate
-        bValue = b.stats?.endDate
-      } else if (sortConfig.key === 'lengthInDays') {
-        aValue = a.stats?.lengthInDays
-        bValue = b.stats?.lengthInDays
-      }
+      if (key === 'startDate') return item.stats?.startDate
+      if (key === 'endDate') return item.stats?.endDate
+      if (key === 'lengthInDays') return item.stats?.lengthInDays
+      if (key === 'avgSentiment') return item.stats?.sentiment?.average
+      if (key === 'submissions') return item.stats?.totalSubmissions
+      if (key === 'votes') return item.stats?.totalVotes
+      if (key === 'comments') return item.stats?.totalComments
+      if (key === 'downvotes') return item.stats?.totalDownvotes
 
-      if (aValue === undefined || aValue === null) return 1
-      if (bValue === undefined || bValue === null) return -1
-
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredData, sortConfig])
+      return getValue(item, key) as string | number | Date | null | undefined
+    },
+  })
 
   if (error) {
     return <div className="p-8 text-center text-error">Error: {error}</div>

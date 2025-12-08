@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
+import { useTableSort } from '@/hooks/common/useTableSort'
+import { DataTable, Column } from '@/components/common/DataTable'
 import { useLeaderboard } from '@/hooks/useMusicLeague/useLeaderboard'
 import { LeaderboardEntry, RankingMetric } from '@/types/leaderboard'
 import { useProfileContext } from '@/contexts/ProfileContext'
@@ -29,11 +30,6 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
       key: 'rank',
       direction: 'asc',
     },
-  })
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'rank',
-    direction: 'asc',
   })
 
   const filteredData = useMemo(() => {
@@ -151,43 +147,20 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
     []
   )
 
-  const handleSort = (key: string) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
-  }
-
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
+  const { sortedData, sortConfig, handleSort } = useTableSort({
+    data: filteredData,
+    initialSort: { key: 'rank', direction: 'asc' },
+    getSortValue: (item, key) => {
       // Handle special sort cases
-      if (sortConfig.key === 'sentimentReceived') {
-        const aVal = a.sentimentReceived.average
-        const bVal = b.sentimentReceived.average
-        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
-      }
-      if (sortConfig.key === 'sentimentGiven') {
-        const aVal = a.sentimentGiven.average
-        const bVal = b.sentimentGiven.average
-        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
-      }
-      if (sortConfig.key === 'avgSubmissionScore') {
-        const aVal = a.roundsParticipated > 0 ? a.totalPoints / a.roundsParticipated : 0
-        const bVal = b.roundsParticipated > 0 ? b.totalPoints / b.roundsParticipated : 0
-        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+      if (key === 'sentimentReceived') return item.sentimentReceived.average
+      if (key === 'sentimentGiven') return item.sentimentGiven.average
+      if (key === 'avgSubmissionScore') {
+        return item.roundsParticipated > 0 ? item.totalPoints / item.roundsParticipated : 0
       }
 
-      const aValue = a[sortConfig.key as keyof LeaderboardEntry]
-      const bValue = b[sortConfig.key as keyof LeaderboardEntry]
-
-      if (aValue === undefined || aValue === null) return 1
-      if (bValue === undefined || bValue === null) return -1
-
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredData, sortConfig])
+      return item[key as keyof LeaderboardEntry] as string | number | null | undefined
+    },
+  })
 
   if (error) {
     return <div className="p-8 text-center text-error">Error: {error}</div>

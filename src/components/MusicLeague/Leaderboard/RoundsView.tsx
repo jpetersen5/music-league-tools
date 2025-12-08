@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
-import { DataTable, Column, SortConfig } from '@/components/common/DataTable'
+import { useTableSort } from '@/hooks/common/useTableSort'
+import { DataTable, Column } from '@/components/common/DataTable'
 import { useRounds } from '@/hooks/useMusicLeague/useRounds'
 import { Round } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
@@ -14,11 +15,6 @@ export interface RoundsViewProps {
 export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
   const { activeProfileId } = useProfileContext()
   const [data, setData] = useState<Round[]>([])
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'startDate',
-    direction: 'desc',
-  })
 
   const { rounds, loading: roundsLoading, error: roundsError } = useRounds(true)
 
@@ -156,33 +152,23 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
     []
   )
 
-  const handleSort = (key: string) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
-  }
-
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
+  const { sortedData, sortConfig, handleSort } = useTableSort({
+    data: filteredData,
+    initialSort: { key: 'startDate', direction: 'desc' },
+    getSortValue: (item, key) => {
       // Helper to safely get value from row or stats
-      const getValue = (item: Round, key: string) => {
-        if (key in item) return item[key as keyof Round]
-        if (item.stats && key in item.stats) return item.stats[key as keyof typeof item.stats]
+      const getValue = (target: Round, targetKey: string) => {
+        if (targetKey in target) return target[targetKey as keyof Round]
+        if (target.stats && targetKey in target.stats)
+          return target.stats[targetKey as keyof typeof target.stats]
         return undefined
       }
 
-      const aValue = getValue(a, sortConfig.key)
-      const bValue = getValue(b, sortConfig.key)
+      if (key === 'avgSentiment') return item.stats?.avgSentiment
 
-      if (aValue === undefined || aValue === null) return 1
-      if (bValue === undefined || bValue === null) return -1
-
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredData, sortConfig])
+      return getValue(item, key) as string | number | Date | null | undefined
+    },
+  })
 
   if (roundsError) {
     return <div className="p-8 text-center text-error">Error: {roundsError}</div>
