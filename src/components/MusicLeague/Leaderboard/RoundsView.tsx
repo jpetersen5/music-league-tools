@@ -190,6 +190,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
         sortConfig={sortConfig}
         onSort={handleSort}
         rowKey={row => row.id}
+        storageKey="rounds-view-columns"
         emptyMessage="No rounds found."
         loading={roundsLoading}
         className="flex-1"

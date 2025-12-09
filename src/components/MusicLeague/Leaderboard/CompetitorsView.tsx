@@ -184,6 +184,7 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
         rowKey={row => row.competitorId}
         emptyMessage="No competitors found."
         loading={isLoading}
+        storageKey="competitors-view-columns"
         className="flex-1"
       />
     </div>

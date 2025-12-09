@@ -244,6 +244,7 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
         sortConfig={sortConfig}
         onSort={handleSort}
         rowKey={row => row.id}
+        storageKey="league-view-columns"
         emptyMessage="No leagues found."
         loading={loading}
         className="flex-1"

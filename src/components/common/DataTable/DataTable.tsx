@@ -32,6 +32,7 @@ export interface DataTableProps<T> {
   className?: string
   rowKey: (row: T) => string
   emptyMessage?: string
+  storageKey?: string
   loading?: boolean
 }
 
@@ -43,16 +44,38 @@ export function DataTable<T>({
   className = '',
   rowKey,
   emptyMessage = 'No data available',
+  storageKey,
   loading = false,
 }: DataTableProps<T>) {
-  // Initialize hidden columns from props
+  // Initialize hidden columns from props or localStorage
   const [hiddenColumnIds, setHiddenColumnIds] = useState<Set<string>>(() => {
+    if (storageKey) {
+      try {
+        const stored = localStorage.getItem(storageKey)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) {
+            return new Set(parsed)
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load column preferences:', e)
+      }
+    }
+
     const hidden = new Set<string>()
     columns.forEach(col => {
       if (col.defaultHidden) hidden.add(col.id)
     })
     return hidden
   })
+
+  // Persist changes to localStorage
+  useEffect(() => {
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(hiddenColumnIds)))
+    }
+  }, [hiddenColumnIds, storageKey])
 
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
