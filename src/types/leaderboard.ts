@@ -103,8 +103,8 @@ export interface LeaderboardEntry {
   commentsGiven: number
   commentsReceived: number
   downvotesEarned: number
-  sentimentGiven: { average: number; polarization: number }
-  sentimentReceived: { average: number; polarization: number }
+  sentimentGiven: { average: number | null; polarization: number }
+  sentimentReceived: { average: number | null; polarization: number }
   maxPoints: number
   minPoints: number
   positivePoints: number

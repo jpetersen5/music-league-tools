@@ -267,7 +267,7 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
         sentimentGivenVotes.length > 0
           ? sentimentGivenVotes.reduce((sum, v) => sum + v.sentimentScore!, 0) /
             sentimentGivenVotes.length
-          : 0
+          : null
       // Polarization Given (std dev of sentiment scores)
       const sentimentGivenScores = sentimentGivenVotes.map(v => v.sentimentScore!)
       const sentimentGivenPolarization = calculateStandardDeviation(sentimentGivenScores)
@@ -280,7 +280,7 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
         sentimentReceivedVotes.length > 0
           ? sentimentReceivedVotes.reduce((sum, v) => sum + v.sentimentScore!, 0) /
             sentimentReceivedVotes.length
-          : 0
+          : null
       // Polarization Received
       const sentimentReceivedScores = sentimentReceivedVotes.map(v => v.sentimentScore!)
       const sentimentReceivedPolarization = calculateStandardDeviation(sentimentReceivedScores)

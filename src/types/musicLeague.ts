@@ -160,7 +160,7 @@ export interface RoundStats {
   } | null
   readonly maxPoints: number
   readonly minPoints: number
-  readonly avgSentiment: number
+  readonly avgSentiment: number | null
   readonly sentiment: {
     readonly positive: number
     readonly neutral: number
@@ -185,7 +185,7 @@ export interface LeagueStats {
   readonly avgPointSpread: number
   readonly commentRate: number
   readonly sentiment: {
-    readonly average: number
+    readonly average: number | null
     readonly positivePercent: number
     readonly neutralPercent: number
     readonly negativePercent: number

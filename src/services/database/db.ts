@@ -90,7 +90,7 @@ export interface MusicLeagueDB extends DBSchema {
 // ============================================================================
 
 const DB_NAME = 'music-league-tools'
-const DB_VERSION = 5
+const DB_VERSION = 6
 
 /**
  * Singleton database instance
@@ -624,6 +624,122 @@ export async function initDatabase(): Promise<IDBPDatabase<MusicLeagueDB>> {
 
               // @ts-expect-error: Migration logic
               profile.stats = stats
+              await profileStore.put(profile)
+            }
+          }
+        }
+
+        // Version 6: Fix sentiment calculation (exclude null/undefined scores from average)
+        if (oldVersion < 6) {
+          if (
+            db.objectStoreNames.contains('rounds') &&
+            db.objectStoreNames.contains('profiles') &&
+            db.objectStoreNames.contains('votes')
+          ) {
+            const tx = transaction
+            const roundStore = tx.objectStore('rounds')
+            const profileStore = tx.objectStore('profiles')
+            const voteStore = tx.objectStore('votes')
+
+            const allRounds = await roundStore.getAll()
+            const allProfiles = await profileStore.getAll()
+            const allVotes = await voteStore.getAll()
+
+            const votesByRound = new Map<string, Vote[]>()
+            const votesByProfile = new Map<string, Vote[]>()
+
+            for (const vote of allVotes) {
+              const rKey = vote.roundId
+              if (!votesByRound.has(rKey)) votesByRound.set(rKey, [])
+              votesByRound.get(rKey)!.push(vote)
+
+              const pKey = vote.profileId
+              if (!votesByProfile.has(pKey)) votesByProfile.set(pKey, [])
+              votesByProfile.get(pKey)!.push(vote)
+            }
+
+            // 1. Update Rounds
+            for (const round of allRounds) {
+              if (!round.stats) continue
+
+              const roundVotes = votesByRound.get(round.id) || []
+              const comments = roundVotes.filter(v => v.comment && v.comment.trim().length > 0)
+
+              let avgSentiment: number | null = null
+              let polarization = 0
+              let positive = 0
+              let neutral = 0
+              let negative = 0
+
+              if (comments.length > 0) {
+                // Only consider comments that actually have a sentiment score
+                const scores = comments
+                  .map(v => v.sentimentScore)
+                  .filter((s): s is number => s !== undefined && s !== null)
+
+                if (scores.length > 0) {
+                  const totalScore = scores.reduce((sum, s) => sum + s, 0)
+                  avgSentiment = totalScore / scores.length
+                  polarization = calculateStandardDeviation(scores)
+
+                  positive = scores.filter(s => s > 0.05).length
+                  neutral = scores.filter(s => s >= -0.05 && s <= 0.05).length
+                  negative = scores.filter(s => s < -0.05).length
+                }
+              }
+
+              // Update stats
+              // @ts-expect-error: Migration logic
+              round.stats.avgSentiment = avgSentiment
+              // @ts-expect-error: Migration logic
+              round.stats.sentiment = {
+                positive,
+                neutral,
+                negative,
+                polarization,
+              }
+
+              await roundStore.put(round)
+            }
+
+            // 2. Update Profiles
+            for (const profile of allProfiles) {
+              if (!profile.stats) continue
+
+              const pVotes = votesByProfile.get(profile.id) || []
+              const comments = pVotes.filter(v => v.comment && v.comment.trim().length > 0)
+
+              let avgSent: number | null = null
+              let pol = 0
+              let posPct = 0
+              let neuPct = 0
+              let negPct = 0
+
+              if (comments.length > 0) {
+                const scores = comments
+                  .map(v => v.sentimentScore)
+                  .filter((s): s is number => s !== undefined && s !== null)
+
+                if (scores.length > 0) {
+                  avgSent = scores.reduce((a, b) => a + b, 0) / scores.length
+                  pol = calculateStandardDeviation(scores)
+
+                  posPct = scores.filter(s => s > 0.05).length / comments.length
+                  neuPct = scores.filter(s => s >= -0.05 && s <= 0.05).length / comments.length
+                  negPct = scores.filter(s => s < -0.05).length / comments.length
+                }
+              }
+
+              // Update stats
+              // @ts-expect-error: Migration logic
+              profile.stats.sentiment = {
+                average: avgSent,
+                polarization: pol,
+                positivePercent: posPct,
+                neutralPercent: neuPct,
+                negativePercent: negPct,
+              }
+
               await profileStore.put(profile)
             }
           }
