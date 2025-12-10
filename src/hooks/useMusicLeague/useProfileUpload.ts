@@ -864,14 +864,17 @@ export function useProfileUpload() {
           votersByRound.get(roundId)!.add(voterId)
         })
 
-        // Pre-group votes by Spotify URI for faster processing
-        const votesByUri = new Map<string, typeof votesWithTempSentiment>()
+        // Pre-group votes by composite key (RoundId + Spotify URI) for faster processing
+        const votesByKey = new Map<string, typeof votesWithTempSentiment>()
         votesWithTempSentiment.forEach(voteRow => {
           const uri = createSpotifyUri(voteRow['Spotify URI'])
-          if (!votesByUri.has(uri)) {
-            votesByUri.set(uri, [])
+          const roundId = createRoundId(voteRow['Round ID'])
+          const key = `${roundId}-${uri}`
+
+          if (!votesByKey.has(key)) {
+            votesByKey.set(key, [])
           }
-          votesByUri.get(uri)!.push(voteRow)
+          votesByKey.get(key)!.push(voteRow)
         })
 
         const dbSubmissions: SubmissionWithSentiment[] = submissionsWithTempSentiment.map(row => {
@@ -879,10 +882,12 @@ export function useProfileUpload() {
           const roundId = createRoundId(row['Round ID'])
           const submitterId = createCompetitorId(row['Submitter ID'])
 
+          const key = `${roundId}-${uri}`
+
           // Calculate points and stats
           const votersInRound = votersByRound.get(roundId)
           const submitterVoted = votersInRound?.has(submitterId) ?? false
-          const subVotes = votesByUri.get(uri) ?? []
+          const subVotes = votesByKey.get(key) ?? []
 
           let totalPoints = 0
           for (const vote of subVotes) {

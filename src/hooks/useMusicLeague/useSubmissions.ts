@@ -243,14 +243,14 @@ function deduplicateSubmissions(
 export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsResult {
   const { activeProfileId } = useProfileContext()
 
-  // State: Store only Spotify URIs for memory efficiency
-  const [submissionUris, setSubmissionUris] = useState<SpotifyUri[]>([])
+  // State: Store composite keys (roundId-spotifyUri) for memory efficiency
+  const [submissionKeys, setSubmissionKeys] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [totalCount, setTotalCount] = useState(0)
 
-  // Cache: Persistent Map for full submission objects
-  const submissionCache = useRef(new Map<SpotifyUri, Submission>())
+  // Cache: Persistent Map for full submission objects (Key: roundId-spotifyUri)
+  const submissionCache = useRef(new Map<string, Submission>())
 
   // Track if we're in "All Profiles" mode
   const isAllProfiles = activeProfileId === ALL_PROFILES_ID
@@ -268,7 +268,7 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
    */
   const loadSubmissionUris = useCallback(async () => {
     if (!activeProfileId) {
-      setSubmissionUris([])
+      setSubmissionKeys([])
       setTotalCount(0)
       setLoading(false)
       return
@@ -334,12 +334,15 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
       )
 
       // Update cache with full objects
+      const newKeys: string[] = []
       for (const submission of filteredSubmissions) {
-        submissionCache.current.set(submission.spotifyUri, submission)
+        const key = `${submission.roundId}-${submission.spotifyUri}`
+        submissionCache.current.set(key, submission)
+        newKeys.push(key)
       }
 
-      // Store only URIs in state
-      setSubmissionUris(filteredSubmissions.map(s => s.spotifyUri))
+      // Store keys in state
+      setSubmissionKeys(newKeys)
       setError(null)
     } catch (err: unknown) {
       console.error('Failed to load submissions:', err)
@@ -352,7 +355,7 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
             : 'Failed to load submissions. Please try again.'
 
       setError(errorMessage)
-      setSubmissionUris([])
+      setSubmissionKeys([])
       setTotalCount(0)
     } finally {
       setLoading(false)
@@ -368,7 +371,7 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
     loadSubmissionUris().then(() => {
       if (!mounted) {
         // Clear state if component unmounted during load
-        setSubmissionUris([])
+        setSubmissionKeys([])
         setTotalCount(0)
       }
     })
@@ -387,19 +390,23 @@ export function useSubmissions(filters: SubmissionFilters = {}): UseSubmissionsR
 
   /**
    * Get submission by Spotify URI from cache
+   * Note: This returns the *first* matching submission if duplicates exist across rounds
    */
   const getSubmission = useCallback((uri: SpotifyUri): Submission | undefined => {
-    return submissionCache.current.get(uri)
+    for (const submission of submissionCache.current.values()) {
+      if (submission.spotifyUri === uri) return submission
+    }
+    return undefined
   }, [])
 
   /**
    * Memoized array of full submission objects
    */
   const submissions = useMemo(() => {
-    return submissionUris
-      .map(uri => submissionCache.current.get(uri))
+    return submissionKeys
+      .map(key => submissionCache.current.get(key))
       .filter((s): s is Submission => s !== undefined)
-  }, [submissionUris])
+  }, [submissionKeys])
 
   return {
     submissions,

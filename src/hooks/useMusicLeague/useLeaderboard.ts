@@ -219,14 +219,16 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
         continue
       }
 
-      const competitorSubmissionUris = new Set(
-        filteredSubmissions.filter(s => s.submitterId === competitor.id).map(s => s.spotifyUri)
+      const competitorSubmissionKeys = new Set(
+        filteredSubmissions
+          .filter(s => s.submitterId === competitor.id)
+          .map(s => `${s.roundId}-${s.spotifyUri}`)
       )
 
       // BUSINESS RULE: Only count votes with positive points assigned
       // 0-point votes are excluded as they only exist due to having comments
       const votesForCompetitor = filteredVotes.filter(v =>
-        competitorSubmissionUris.has(v.spotifyUri)
+        competitorSubmissionKeys.has(`${v.roundId}-${v.spotifyUri}`)
       )
       const votesReceived = votesForCompetitor.filter(isPositiveVote).length
 
@@ -352,21 +354,18 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
     const filteredSubmissions = submissions?.filter(s => filteredRoundIds.has(s.roundId)) || []
 
     // Date range calculation
-    let dateRange: { earliest: Date; latest: Date } | null = null
-    if (filteredVotes.length > 0) {
-      const voteDates = filteredVotes.map(v => v.createdAt.getTime())
-      const earliest = voteDates.reduce(
-        (min, date) => (date < min ? date : min),
-        voteDates[0] ?? Date.now()
-      )
-      const latest = voteDates.reduce(
-        (max, date) => (date > max ? date : max),
-        voteDates[0] ?? Date.now()
-      )
-      dateRange = {
-        earliest: new Date(earliest),
-        latest: new Date(latest),
-      }
+    const voteDates = filteredVotes.map(v => v.createdAt.getTime())
+    const earliest = voteDates.reduce(
+      (min, date) => (date < min ? date : min),
+      voteDates[0] ?? Date.now()
+    )
+    const latest = voteDates.reduce(
+      (max, date) => (date > max ? date : max),
+      voteDates[0] ?? Date.now()
+    )
+    const dateRange = {
+      earliest: new Date(earliest),
+      latest: new Date(latest),
     }
 
     // Create performancesByRound Map for competition intensity calculations
@@ -451,23 +450,25 @@ export function useLeaderboard(filters: LeaderboardFilters): UseLeaderboardResul
     if (filteredSubmissions.length > 0) {
       const submissionPolarization = new Map<string, { score: number; submission: Submission }>()
 
-      // Group votes by submission
-      const votesByUri = new Map<string, number[]>()
+      // Group votes by submission key (roundId-spotifyUri)
+      const votesByKey = new Map<string, number[]>()
       for (const vote of filteredVotes) {
         if (!vote.spotifyUri) continue
-        const existing = votesByUri.get(vote.spotifyUri) || []
+        const key = `${vote.roundId}-${vote.spotifyUri}`
+        const existing = votesByKey.get(key) || []
         existing.push(vote.pointsAssigned)
-        votesByUri.set(vote.spotifyUri, existing)
+        votesByKey.set(key, existing)
       }
 
       // Calculate polarization score (standard deviation) for each submission
       for (const submission of filteredSubmissions) {
-        const votePoints = votesByUri.get(submission.spotifyUri)
+        const key = `${submission.roundId}-${submission.spotifyUri}`
+        const votePoints = votesByKey.get(key)
         if (!votePoints) continue
 
         const stddev = calculateStandardDeviation(votePoints)
         if (stddev > 0) {
-          submissionPolarization.set(submission.spotifyUri, {
+          submissionPolarization.set(key, {
             score: stddev,
             submission,
           })

@@ -124,8 +124,11 @@ export interface UseVotesResult {
 /**
  * Generate a unique key for a vote (for use in Map)
  */
+/**
+ * Generate a unique key for a vote (for use in Map)
+ */
 function getVoteKey(vote: Vote): string {
-  return `${vote.profileId}:${vote.spotifyUri}:${vote.voterId}`
+  return `${vote.profileId}:${vote.roundId}:${vote.spotifyUri}:${vote.voterId}`
 }
 
 /**

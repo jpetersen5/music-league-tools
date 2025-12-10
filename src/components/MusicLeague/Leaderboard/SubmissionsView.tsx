@@ -280,7 +280,7 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
         columns={columns}
         sortConfig={sortConfig}
         onSort={handleSort}
-        rowKey={row => row.spotifyUri + row.roundId}
+        rowKey={row => `${row.roundId}-${row.spotifyUri}`}
         emptyMessage="No submissions found."
         loading={submissionsLoading || statsLoading}
         className="flex-1"

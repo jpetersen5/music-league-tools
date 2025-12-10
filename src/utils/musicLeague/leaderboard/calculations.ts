@@ -49,6 +49,7 @@ export function calculateSubmissionPoints(
 
   for (const vote of votes) {
     if (vote.spotifyUri !== submission.spotifyUri) continue
+    if (vote.roundId !== submission.roundId) continue
 
     if (submitterVoted) {
       // Normal case: everything counts
@@ -404,28 +405,29 @@ export function findMostPositiveSong(
   competitors: Map<string, Competitor>,
   rounds: Map<RoundId, { name: string }>
 ): SongStat | null {
-  const sentimentByUri = new Map<string, number>()
+  const sentimentByKey = new Map<string, number>()
 
   for (const vote of votes) {
     if (vote.sentimentScore !== undefined && vote.sentimentScore !== null) {
-      const current = sentimentByUri.get(vote.spotifyUri) || 0
-      sentimentByUri.set(vote.spotifyUri, current + vote.sentimentScore)
+      const key = `${vote.roundId}-${vote.spotifyUri}`
+      const current = sentimentByKey.get(key) || 0
+      sentimentByKey.set(key, current + vote.sentimentScore)
     }
   }
 
-  if (sentimentByUri.size === 0) return null
+  if (sentimentByKey.size === 0) return null
 
   let maxSentiment = -Infinity
-  let bestUri = ''
+  let bestKey = ''
 
-  for (const [uri, sentiment] of sentimentByUri) {
+  for (const [key, sentiment] of sentimentByKey) {
     if (sentiment > maxSentiment) {
       maxSentiment = sentiment
-      bestUri = uri
+      bestKey = key
     }
   }
 
-  const submission = submissions.find(s => s.spotifyUri === bestUri)
+  const submission = submissions.find(s => `${s.roundId}-${s.spotifyUri}` === bestKey)
   if (!submission) return null
 
   const submitter = competitors.get(submission.submitterId)
@@ -455,31 +457,32 @@ export function findMostNegativeSong(
   competitors: Map<string, Competitor>,
   rounds: Map<RoundId, { name: string }>
 ): SongStat | null {
-  const sentimentByUri = new Map<string, number>()
+  const sentimentByKey = new Map<string, number>()
 
   for (const vote of votes) {
     if (vote.sentimentScore !== undefined && vote.sentimentScore !== null) {
-      const current = sentimentByUri.get(vote.spotifyUri) || 0
-      sentimentByUri.set(vote.spotifyUri, current + vote.sentimentScore)
+      const key = `${vote.roundId}-${vote.spotifyUri}`
+      const current = sentimentByKey.get(key) || 0
+      sentimentByKey.set(key, current + vote.sentimentScore)
     }
   }
 
-  if (sentimentByUri.size === 0) return null
+  if (sentimentByKey.size === 0) return null
 
   let minSentiment = Infinity
-  let worstUri = ''
+  let worstKey = ''
 
-  for (const [uri, sentiment] of sentimentByUri) {
+  for (const [key, sentiment] of sentimentByKey) {
     if (sentiment < minSentiment) {
       minSentiment = sentiment
-      worstUri = uri
+      worstKey = key
     }
   }
 
   // Only return if sentiment is negative
   if (minSentiment >= 0) return null
 
-  const submission = submissions.find(s => s.spotifyUri === worstUri)
+  const submission = submissions.find(s => `${s.roundId}-${s.spotifyUri}` === worstKey)
   if (!submission) return null
 
   const submitter = competitors.get(submission.submitterId)
@@ -509,26 +512,27 @@ export function findHighestScoredSong(
   competitors: Map<string, Competitor>,
   rounds: Map<RoundId, { name: string }>
 ): SongStat | null {
-  const pointsByUri = new Map<string, number>()
+  const pointsByKey = new Map<string, number>()
 
   for (const vote of votes) {
-    const current = pointsByUri.get(vote.spotifyUri) || 0
-    pointsByUri.set(vote.spotifyUri, current + vote.pointsAssigned)
+    const key = `${vote.roundId}-${vote.spotifyUri}`
+    const current = pointsByKey.get(key) || 0
+    pointsByKey.set(key, current + vote.pointsAssigned)
   }
 
-  if (pointsByUri.size === 0) return null
+  if (pointsByKey.size === 0) return null
 
   let maxPoints = -Infinity
-  let bestUri = ''
+  let bestKey = ''
 
-  for (const [uri, points] of pointsByUri) {
+  for (const [key, points] of pointsByKey) {
     if (points > maxPoints) {
       maxPoints = points
-      bestUri = uri
+      bestKey = key
     }
   }
 
-  const submission = submissions.find(s => s.spotifyUri === bestUri)
+  const submission = submissions.find(s => `${s.roundId}-${s.spotifyUri}` === bestKey)
   if (!submission) return null
 
   const submitter = competitors.get(submission.submitterId)
@@ -558,26 +562,27 @@ export function findLowestScoredSong(
   competitors: Map<string, Competitor>,
   rounds: Map<RoundId, { name: string }>
 ): SongStat | null {
-  const pointsByUri = new Map<string, number>()
+  const pointsByKey = new Map<string, number>()
 
   for (const vote of votes) {
-    const current = pointsByUri.get(vote.spotifyUri) || 0
-    pointsByUri.set(vote.spotifyUri, current + vote.pointsAssigned)
+    const key = `${vote.roundId}-${vote.spotifyUri}`
+    const current = pointsByKey.get(key) || 0
+    pointsByKey.set(key, current + vote.pointsAssigned)
   }
 
-  if (pointsByUri.size === 0) return null
+  if (pointsByKey.size === 0) return null
 
   let minPoints = Infinity
-  let worstUri = ''
+  let worstKey = ''
 
-  for (const [uri, points] of pointsByUri) {
+  for (const [key, points] of pointsByKey) {
     if (points < minPoints) {
       minPoints = points
-      worstUri = uri
+      worstKey = key
     }
   }
 
-  const submission = submissions.find(s => s.spotifyUri === worstUri)
+  const submission = submissions.find(s => `${s.roundId}-${s.spotifyUri}` === worstKey)
   if (!submission) return null
 
   const submitter = competitors.get(submission.submitterId)
@@ -607,28 +612,29 @@ export function findMostUniqueVotersSong(
   competitors: Map<string, Competitor>,
   rounds: Map<RoundId, { name: string }>
 ): SongStat | null {
-  const votersByUri = new Map<string, Set<string>>()
+  const votersByKey = new Map<string, Set<string>>()
 
   for (const vote of votes) {
-    if (!votersByUri.has(vote.spotifyUri)) {
-      votersByUri.set(vote.spotifyUri, new Set())
+    const key = `${vote.roundId}-${vote.spotifyUri}`
+    if (!votersByKey.has(key)) {
+      votersByKey.set(key, new Set())
     }
-    votersByUri.get(vote.spotifyUri)!.add(vote.voterId)
+    votersByKey.get(key)!.add(vote.voterId)
   }
 
-  if (votersByUri.size === 0) return null
+  if (votersByKey.size === 0) return null
 
   let maxVoters = 0
-  let bestUri = ''
+  let bestKey = ''
 
-  for (const [uri, voters] of votersByUri) {
+  for (const [key, voters] of votersByKey) {
     if (voters.size > maxVoters) {
       maxVoters = voters.size
-      bestUri = uri
+      bestKey = key
     }
   }
 
-  const submission = submissions.find(s => s.spotifyUri === bestUri)
+  const submission = submissions.find(s => `${s.roundId}-${s.spotifyUri}` === bestKey)
   if (!submission) return null
 
   const submitter = competitors.get(submission.submitterId)
@@ -787,7 +793,9 @@ export function findMostLovedSubmitter(
 
   for (const vote of votes) {
     if (vote.sentimentScore !== undefined && vote.sentimentScore !== null) {
-      const submission = submissions.find(s => s.spotifyUri === vote.spotifyUri)
+      const submission = submissions.find(
+        s => s.spotifyUri === vote.spotifyUri && s.roundId === vote.roundId
+      )
       if (submission) {
         const current = sentimentBySubmitter.get(submission.submitterId) || 0
         sentimentBySubmitter.set(submission.submitterId, current + vote.sentimentScore)
