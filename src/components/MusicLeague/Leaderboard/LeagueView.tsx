@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useTableSort } from '@/hooks/common/useTableSort'
-import { DataTable, Column } from '@/components/common/DataTable'
+import { DataTable, Column, SentimentCell } from '@/components/common/DataTable'
 import { getAllProfiles } from '@/services/database/profiles'
 import { Profile } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
 import { formatDuration } from '@/utils/musicLeague/leaderboard'
-import { getSentimentClass } from '@/utils/musicLeague/sentimentAnalysis'
+
 import './LeagueView.scss'
 
 export interface LeagueViewProps {
@@ -170,15 +170,7 @@ export function LeagueView({ searchQuery = '' }: LeagueViewProps) {
       {
         id: 'avgSentiment',
         header: 'Avg Sent.',
-        accessor: row => (
-          <span
-            className={`league-view__metric league-view__metric--${getSentimentClass(
-              row.stats?.sentiment?.average ?? 0
-            )}`}
-          >
-            {row.stats?.sentiment?.average?.toFixed(2) ?? '-'}
-          </span>
-        ),
+        accessor: row => <SentimentCell value={row.stats?.sentiment?.average} />,
         sortable: true,
         className: 'league-view__number',
         tooltip: 'Average sentiment',

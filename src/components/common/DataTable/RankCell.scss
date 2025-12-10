@@ -1,0 +1,21 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.rank-cell {
+  font-weight: $font-weight-bold;
+
+  &--1 {
+    color: var(--color-gold);
+    font-size: 1.1em;
+  }
+
+  &--2 {
+    color: var(--color-silver);
+    font-size: 1.1em;
+  }
+
+  &--3 {
+    color: var(--color-bronze);
+    font-size: 1.1em;
+  }
+}

@@ -481,6 +481,7 @@ export async function initDatabase(): Promise<IDBPDatabase<MusicLeagueDB>> {
                     title: winner!.title,
                     artist: winner!.artists[0] || 'Unknown',
                     submitterId: winner!.submitterId,
+                    spotifyUri: winner!.spotifyUri,
                     points: maxPoints,
                   }
                 }

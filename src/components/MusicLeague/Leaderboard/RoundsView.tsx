@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useTableSort } from '@/hooks/common/useTableSort'
-import { DataTable, Column } from '@/components/common/DataTable'
+import { DataTable, Column, SentimentCell } from '@/components/common/DataTable'
 import { useRounds } from '@/hooks/useMusicLeague/useRounds'
 import { Round } from '@/types/musicLeague'
 import { useProfileContext } from '@/contexts/ProfileContext'
 import { Tooltip } from '@/components/common'
-import { getSentimentClass } from '@/utils/musicLeague/sentimentAnalysis'
+
 import './RoundsView.scss'
 
 export interface RoundsViewProps {
@@ -95,7 +95,23 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
               className="rounds-view__winner"
               title={`${row.stats.winningSubmission.title} by ${row.stats.winningSubmission.artist}`}
             >
-              <span className="rounds-view__winner-title">{row.stats.winningSubmission.title}</span>
+              {row.stats.winningSubmission.spotifyUri ? (
+                <span className="rounds-view__winner-title">
+                  <a
+                    href={`https://open.spotify.com/track/${row.stats.winningSubmission.spotifyUri.split(':')[2]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounds-view__winner-link"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {row.stats.winningSubmission.title}
+                  </a>
+                </span>
+              ) : (
+                <span className="rounds-view__winner-title">
+                  {row.stats.winningSubmission.title}
+                </span>
+              )}
               <span className="rounds-view__winner-artist">
                 {row.stats.winningSubmission.artist}
               </span>
@@ -112,6 +128,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
         accessor: row => row.stats?.maxPoints ?? '-',
         sortable: true,
         className: 'rounds-view__number',
+        tooltip: 'Highest score in the round',
       },
       {
         id: 'minPoints',
@@ -120,6 +137,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
         sortable: true,
         className: 'rounds-view__number',
         defaultHidden: true,
+        tooltip: 'Lowest score in the round',
       },
       {
         id: 'commentCount',
@@ -131,13 +149,7 @@ export function RoundsView({ searchQuery = '' }: RoundsViewProps) {
       {
         id: 'avgSentiment',
         header: 'Avg Sent.',
-        accessor: row => (
-          <span
-            className={`rounds-view__sentiment rounds-view__sentiment--${getSentimentClass(row.stats?.avgSentiment ?? 0)}`}
-          >
-            {row.stats?.avgSentiment?.toFixed(2) ?? '-'}
-          </span>
-        ),
+        accessor: row => <SentimentCell value={row.stats?.avgSentiment} />,
         sortable: true,
         className: 'rounds-view__number',
       },

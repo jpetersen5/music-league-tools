@@ -72,7 +72,7 @@ export const Leaderboard = () => {
             primaryMetrics={
               <>
                 <MetricCard label="Total Rounds" value={statistics.totalRounds} />
-                <MetricCard label="Active Competitors" value={statistics.totalCompetitors} />
+                <MetricCard label="Total Competitors" value={statistics.totalCompetitors} />
                 <MetricCard label="League Duration" value={formatDuration(statistics.dateRange)} />
                 <MetricCard label="Total Votes" value={statistics.totalVotes} />
               </>

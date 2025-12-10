@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTableSort } from '@/hooks/common/useTableSort'
-import { DataTable, Column } from '@/components/common/DataTable'
+import { DataTable, Column, SentimentCell, RankCell } from '@/components/common/DataTable'
 import { useLeaderboard } from '@/hooks/useMusicLeague/useLeaderboard'
 import { LeaderboardEntry, RankingMetric } from '@/types/leaderboard'
 import { useProfileContext } from '@/contexts/ProfileContext'
@@ -43,11 +43,7 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
       {
         id: 'rank',
         header: 'Rank',
-        accessor: row => (
-          <span className={`competitors-view__rank competitors-view__rank--${row.rank}`}>
-            #{row.rank}
-          </span>
-        ),
+        accessor: row => <RankCell rank={row.rank} />,
         sortable: true,
         className: 'competitors-view__col-rank',
       },
@@ -81,6 +77,7 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
         ),
         sortable: true,
         className: 'competitors-view__col-rate',
+        tooltip: 'Percentage of rounds won',
       },
       {
         id: 'podiumRate',
@@ -92,6 +89,7 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
         ),
         sortable: true,
         className: 'competitors-view__col-rate',
+        tooltip: 'Percentage of rounds in top 3',
       },
       {
         id: 'averagePosition',
@@ -130,7 +128,7 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
       {
         id: 'sentimentReceived',
         header: 'Sent. Rcv',
-        accessor: row => row.sentimentReceived.average.toFixed(2),
+        accessor: row => <SentimentCell value={row.sentimentReceived.average} />,
         sortable: true,
         className: 'competitors-view__col-sentiment',
         tooltip: 'Average sentiment of comments received',
@@ -138,7 +136,7 @@ export function CompetitorsView({ searchQuery = '' }: CompetitorsViewProps) {
       {
         id: 'sentimentGiven',
         header: 'Sent. Given',
-        accessor: row => row.sentimentGiven.average.toFixed(2),
+        accessor: row => <SentimentCell value={row.sentimentGiven.average} />,
         sortable: true,
         className: 'competitors-view__col-sentiment',
         tooltip: 'Average sentiment of comments given',

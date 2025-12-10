@@ -155,6 +155,7 @@ export interface RoundStats {
     readonly title: string
     readonly artist: string
     readonly submitterId: CompetitorId
+    readonly spotifyUri: SpotifyUri
     readonly points: number
   } | null
   readonly maxPoints: number

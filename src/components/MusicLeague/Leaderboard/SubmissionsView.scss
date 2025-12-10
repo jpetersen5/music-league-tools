@@ -13,6 +13,12 @@
       @include truncate;
       font-weight: $font-weight-medium;
       color: var(--color-text);
+      text-decoration: none;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: var(--color-primary);
+      }
     }
 
     &-artist {
@@ -24,6 +30,17 @@
 
   &__round {
     @include truncate;
+
+    &-link {
+      font-weight: $font-weight-medium;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: var(--color-primary);
+      }
+    }
   }
 
   &__points-total {

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useTableSort } from '@/hooks/common/useTableSort'
-import { DataTable, Column } from '@/components/common/DataTable'
+import { DataTable, Column, RankCell, SentimentCell } from '@/components/common/DataTable'
 import { useSubmissions } from '@/hooks/useMusicLeague/useSubmissions'
 import { useCompetitors } from '@/hooks/useMusicLeague/useCompetitors'
 import { useRounds } from '@/hooks/useMusicLeague/useRounds'
@@ -12,6 +12,7 @@ import './SubmissionsView.scss'
 type SubmissionData = Submission & {
   submitterName: string
   roundName: string
+  roundPlaylistUrl?: string
   rankInRound?: number
   sentiment: {
     average: number
@@ -42,6 +43,7 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
         // Create maps for quick lookups
         const competitorMap = new Map(competitors.map(c => [c.id, c.name]))
         const roundMap = new Map(rounds.map(r => [r.id, r.name]))
+        const roundUrlMap = new Map(rounds.map(r => [r.id, r.playlistUrl]))
 
         // Calculate ranks
         const submissionsByRound = new Map<string, typeof submissions>()
@@ -80,6 +82,7 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
             rankInRound: rankMap.get(submission.spotifyUri),
             submitterName: competitorMap.get(submission.submitterId) || 'Unknown',
             roundName: roundMap.get(submission.roundId) || 'Unknown',
+            roundPlaylistUrl: roundUrlMap.get(submission.roundId),
           }
         })
         setData(enrichedSubmissions)
@@ -113,11 +116,7 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
       {
         id: 'rank',
         header: 'Rank',
-        accessor: row => (
-          <span className="submissions-view__rank">
-            {row.rankInRound ? `#${row.rankInRound}` : '-'}
-          </span>
-        ),
+        accessor: row => <RankCell rank={row.rankInRound} />,
         sortable: true,
         className: 'submissions-view__col-rank',
         defaultHidden: false,
@@ -131,7 +130,7 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
               href={`https://open.spotify.com/track/${row.spotifyUri.split(':')[2]}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="submissions-view__track-title hover:underline"
+              className="submissions-view__track-title"
               onClick={e => e.stopPropagation()}
             >
               {row.title}
@@ -145,11 +144,25 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
       {
         id: 'round',
         header: 'Round',
-        accessor: row => (
-          <div className="submissions-view__round" title={row.roundName}>
-            {row.roundName}
-          </div>
-        ),
+        accessor: row => {
+          return (
+            <div className="submissions-view__round" title={row.roundName}>
+              {row.roundPlaylistUrl ? (
+                <a
+                  href={row.roundPlaylistUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="submissions-view__round-link"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {row.roundName}
+                </a>
+              ) : (
+                row.roundName
+              )}
+            </div>
+          )
+        },
         sortable: true,
         className: 'submissions-view__col-round',
       },
@@ -188,7 +201,7 @@ export function SubmissionsView({ searchQuery = '' }: SubmissionsViewProps) {
       {
         id: 'avgSentiment',
         header: 'Avg Sentiment',
-        accessor: row => (row.sentiment.average ? row.sentiment.average.toFixed(2) : '-'),
+        accessor: row => <SentimentCell value={row.sentiment.average} />,
         sortable: true,
         className: 'submissions-view__col-sentiment',
         tooltip: 'Average sentiment score (-1 to +1)',
